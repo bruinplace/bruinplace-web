@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { QueryKeys } from "@/lib/query-keys";
 
 export type Listing = {
   id: string;
@@ -12,11 +13,9 @@ export type SampleData = {
   message: string;
 };
 
-const queryKey = ["api", "sample"] as const;
-
 export function useGetSampleData() {
   return useQuery({
-    queryKey: [...queryKey],
+    queryKey: [QueryKeys.TEST_SAMPLE],
     queryFn: () => api.get<SampleData>("/test/sample"),
   });
 }
