@@ -1,15 +1,22 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { User, Plus } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Menu } from "lucide-react"
 
 export default function Header() {
   return (
-    <header className="relative w-[1441px] h-[74px] bg-sky-500">
-      
+    <header className="relative h-[74px] w-[1441px] bg-[#71C4FF]">
       {/* BruinPlace text */}
       <Link
         href="/"
-        className="absolute text-white font-semibold text-xl"
+        className="absolute text-xl font-semibold text-white"
         style={{
           left: "31px",
           top: "23px",
@@ -19,6 +26,29 @@ export default function Header() {
       >
         BruinPlace
       </Link>
+
+      {/* Add Listing Button */}
+      <Button
+        asChild
+        className="
+          absolute
+          h-[37px] w-[130px]
+          rounded-full
+          bg-white
+          text-sky-600
+          hover:bg-white hover:text-sky-600
+          flex items-center justify-center gap-2
+        "
+        style={{
+          left: "1160px",
+          top: "18px",
+        }}
+      >
+        <Link href="/listings/new">
+          <Plus className="h-4 w-4" />
+          <span className="text-sm font-medium">Add listing</span>
+        </Link>
+      </Button>
 
       {/* Sign In Button */}
       <Button
@@ -31,8 +61,7 @@ export default function Header() {
           border border-sky-600
           text-sky-600
           hover:bg-white hover:text-sky-600
-          flex items-center justify-center
-          gap-[20px]
+          flex items-center justify-center gap-2
         "
         style={{
           left: "1310px",
@@ -42,7 +71,6 @@ export default function Header() {
         <User className="h-4 w-4" />
         <span className="text-sm font-medium">Sign in</span>
       </Button>
-
     </header>
-  );
+  )
 }

@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import { ListingCard } from "@/components/ui/listings/ListingCard"
+import { ListingCard } from "@/components/listings/ListingCard"
 
 type ListingRowProps = {
   title: string
@@ -21,13 +22,18 @@ export function ListingRow({ title, listings, onSeeMore }: ListingRowProps) {
 
         <div className="ml-auto">
           <Button
-            type="button"
-            onClick={onSeeMore}
-            className="h-8 rounded-full px-5 text-white bg-[#3EA6FC] hover:bg-[#3EA6FC]/80"
+            asChild
             variant="secondary"
+            className="h-8 rounded-full bg-[#3EA6FC] px-5 text-white hover:bg-[#3EA6FC]/80"
           >
-            <Search className="mr-2 h-2 w-4" />
-            See more
+            <Link
+              href="/search"
+              onClick={onSeeMore}
+              className="inline-flex items-center gap-2"
+            >
+              <Search className="h-4 w-4" />
+              <span>See more</span>
+            </Link>
           </Button>
         </div>
       </div>
