@@ -27,6 +27,29 @@ export default function Header() {
         BruinPlace
       </Link>
 
+      {/* Add Sublet Button */}
+      <Button
+        asChild
+        className="
+          absolute
+          h-[37px] w-[130px]
+          rounded-full
+          bg-white
+          text-sky-600
+          hover:bg-white hover:text-sky-600
+          flex items-center justify-center gap-2
+        "
+        style={{
+          left: "1020px", // 👈 slightly left of Add listing
+          top: "18px",
+        }}
+      >
+        <Link href="/sublets/new">
+          <Plus className="h-4 w-4" />
+          <span className="text-sm font-medium">Add sublet</span>
+        </Link>
+      </Button>
+
       {/* Add Listing Button */}
       <Button
         asChild
