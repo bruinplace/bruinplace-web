@@ -235,8 +235,9 @@ function useShowAfterScrollPast() {
   return { ref, show }
 }
 
-export default function ListingPage({ params }: { params: { id: string } }) {
-  const listing = { ...MOCK_LISTING, id: params.id }
+export default function ListingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params)
+  const listing = { ...MOCK_LISTING, id }
   const { ref: galleryEndRef, show: showContact } = useShowAfterScrollPast()
   const onSeeMore = () => {}
 
