@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UserCog } from "lucide-react"
 
-export default function SignInPage() {
+export default function SignUpPage() {
   return (
     <div className="min-h-[calc(100vh-74px)] w-full bg-white flex items-center justify-center px-4 py-10">
       <div
@@ -22,11 +22,23 @@ export default function SignInPage() {
             BruinPlace
           </div>
           <div className="text-sm text-zinc-700">
-            Sign in to continue.
+            Create an account to write reviews.
           </div>
         </div>
 
         <form className="mt-8 flex flex-col gap-5">
+          <div className="grid gap-2">
+            <Label htmlFor="name" className="text-sm text-zinc-700">
+              Name
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Brian Hong"
+              className="h-11 rounded-xl"
+            />
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="email" className="text-sm text-zinc-700">
               Email
@@ -55,7 +67,7 @@ export default function SignInPage() {
             type="submit"
             className="h-[42px] w-full rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]"
           >
-            Sign in
+            Create account
           </Button>
 
           <div className="flex items-center gap-4">
@@ -65,9 +77,9 @@ export default function SignInPage() {
           </div>
 
           <div className="text-center text-sm text-zinc-700">
-            Don’t have an account?{" "}
-            <Link href="/sign-up" className="font-medium text-[#71C4FF]">
-              Create account
+            Already have an account?{" "}
+            <Link href="/sign-in" className="font-medium text-[#71C4FF]">
+              Sign in
             </Link>
           </div>
         </form>

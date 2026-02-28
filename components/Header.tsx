@@ -142,7 +142,7 @@ export default function Header() {
               onClick={() => {
                 setSignInOpen(false)
                 // route to your sign up page
-                window.location.href = "/signup"
+                window.location.href = "/auth/sign-up"
               }}
             >
               Create account
@@ -163,7 +163,7 @@ export default function Header() {
               onClick={() => {
                 setSignInOpen(false)
                 // route to your sign in page
-                window.location.href = "/signin"
+                window.location.href = "/auth/sign-in"
               }}
             >
               Sign in
