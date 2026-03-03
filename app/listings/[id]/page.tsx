@@ -2,12 +2,12 @@
 
 import React from "react"
 import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { StarIcon as StarSolid } from "@heroicons/react/24/solid"
-import { StarIcon as StarOutline } from "@heroicons/react/24/outline"
+
 import {
   Heart,
   Share2,
@@ -77,63 +77,66 @@ const MOCK_REVIEWS: Review[] = [
     name: "King Triton",
     dateLabel: "2022 · 2 years ago",
     rating: 4,
-    text:
-      "Solid apartment overall. Maintenance was quick and the location is hard to beat. Parking can be tight.",
+    text: "Solid apartment overall. Maintenance was quick and the location is hard to beat. Parking can be tight.",
     tags: ["Management 4/5", "Cleanliness 4/5", "Noise level 4/5", "Lease flexibility 4/5"],
   },
 ]
 
-function Stars({
-  value,
-  size = 22,
-}: {
-  value: number
-  size?: number
-}) {
-  const fullStars = Math.floor(value)
-  const hasPartial = value % 1 !== 0
-  const partialFill = value % 1
+/**
+ * Lucide-based stars with decimal support (e.g., 4.4).
+ * Uses an overlay fill clipped to a percentage width for partial stars.
+ */
+function Stars({ value, size = 22 }: { value: number; size?: number }) {
+  const full = Math.floor(value)
+  const frac = value - full
 
   return (
     <div className="flex items-center gap-1">
       {Array.from({ length: 5 }).map((_, i) => {
-        // FULL
-        if (i < fullStars) {
+        const isFull = i < full
+        const isPartial = i === full && frac > 0
+
+        if (isFull) {
           return (
-            <StarSolid
+            <Star
               key={i}
               className="text-[#F6C24A]"
               style={{ width: size, height: size }}
+              fill="currentColor"
             />
           )
         }
 
-        // PARTIAL
-        if (i === fullStars && hasPartial) {
+        if (isPartial) {
+          const pct = Math.round(frac * 100)
+
           return (
-            <svg
-              key={i}
-              width={size}
-              height={size}
-              viewBox="0 0 24 24"
-            >
-              <defs>
-                <linearGradient id={`star-grad-${i}`}>
-                  <stop offset={`${partialFill * 100}%`} stopColor="#F6C24A" />
-                  <stop offset={`${partialFill * 100}%`} stopColor="rgba(0,0,0,0.2)" />
-                </linearGradient>
-              </defs>
-              <StarSolid fill={`url(#star-grad-${i})`} />
-            </svg>
+            <span key={i} className="relative inline-block" style={{ width: size, height: size }}>
+              {/* empty base */}
+              <Star
+                className="text-muted-foreground/40"
+                style={{ width: size, height: size }}
+                fill="none"
+              />
+
+              {/* filled overlay clipped */}
+              <span className="absolute inset-0 overflow-hidden" style={{ width: `${pct}%` }}>
+                <Star
+                  className="text-[#F6C24A]"
+                  style={{ width: size, height: size }}
+                  fill="currentColor"
+                />
+              </span>
+            </span>
           )
         }
 
-        // EMPTY
         return (
-          <StarOutline
+          <Star
             key={i}
             className="text-muted-foreground/40"
             style={{ width: size, height: size }}
+            fill="none"
           />
         )
       })}
@@ -155,10 +158,7 @@ function RatingBars() {
         <div key={r.label} className="grid grid-cols-[64px_1fr] items-center gap-3">
           <div className="text-xs text-muted-foreground">{r.label}</div>
           <div className="h-2 rounded-full bg-muted">
-            <div
-              className="h-2 rounded-full bg-[#71C4FF]"
-              style={{ width: `${Math.round(r.pct * 100)}%` }}
-            />
+            <div className="h-2 rounded-full bg-[#71C4FF]" style={{ width: `${Math.round(r.pct * 100)}%` }} />
           </div>
         </div>
       ))}
@@ -193,7 +193,7 @@ function RecommendedCard() {
           <div className="flex items-baseline justify-between">
             <div className="text-lg font-semibold leading-none">$1,342 per month</div>
             <div className="flex items-center gap-1 text-sm font-medium">
-              <Star className="h-4 w-4 fill-current text-muted-foreground" />
+              <Star className="h-4 w-4 text-muted-foreground" fill="currentColor" />
               <span>4.2</span>
               <span className="text-muted-foreground">(17)</span>
             </div>
@@ -209,10 +209,7 @@ function RecommendedCard() {
   )
 }
 
-/**
- * Shows `show=true` once you've scrolled past the sentinel element.
- * Put the sentinel *after* the section you want to scroll past (the gallery).
- */
+/** Optional helper (you weren’t using showContact, but keeping hook since you had it) */
 function useShowAfterScrollPast() {
   const ref = React.useRef<HTMLDivElement | null>(null)
   const [show, setShow] = React.useState(false)
@@ -221,13 +218,7 @@ function useShowAfterScrollPast() {
     const el = ref.current
     if (!el) return
 
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        setShow(!entry.isIntersecting)
-      },
-      { threshold: 0 }
-    )
-
+    const obs = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting), { threshold: 0 })
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
@@ -235,10 +226,13 @@ function useShowAfterScrollPast() {
   return { ref, show }
 }
 
-export default function ListingPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = React.use(params)
+export default function ListingPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const listing = { ...MOCK_LISTING, id }
-  const { ref: galleryEndRef, show: showContact } = useShowAfterScrollPast()
+
+  // If you want to use this later, keep it:
+  const { ref: galleryEndRef } = useShowAfterScrollPast()
+
   const onSeeMore = () => {}
 
   return (
@@ -246,35 +240,35 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
       <main className="mx-auto max-w-[1300px] px-6 py-8">
         {/* FULL-WIDTH GALLERY */}
         <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
-        {/* Left: hero */}
-        <div className="relative overflow-hidden rounded-2xl bg-muted">
-            {/* shorter than 16/11 -> less tall */}
+          {/* Left: hero */}
+          <div className="relative overflow-hidden rounded-2xl bg-muted">
             <div className="aspect-[16/9] max-h-[520px] w-full">
-            <ImagePlaceholder />
+              <ImagePlaceholder />
             </div>
-        </div>
+          </div>
 
-        {/* Right: 2x2 tiles */}
-        <div className="grid grid-cols-2 gap-3">
+          {/* Right: 2x2 tiles */}
+          <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="relative overflow-hidden rounded-2xl bg-muted">
-                {/* match the hero's "shorter" feel */}
+              <div key={i} className="relative overflow-hidden rounded-2xl bg-muted">
                 <div className="aspect-[16/9]">
-                <ImagePlaceholder />
+                  <ImagePlaceholder />
                 </div>
 
-                {/* "See all photos" pinned bottom-right on last tile */}
                 {i === 3 && (
-                <div className="absolute bottom-3 right-3">
+                  <div className="absolute bottom-3 right-3">
                     <Button className="rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
-                    See all photos
+                      See all photos
                     </Button>
-                </div>
+                  </div>
                 )}
-            </div>
+              </div>
             ))}
+          </div>
         </div>
-        </div>
+
+        {/* Sentinel if you decide to use it */}
+        <div ref={galleryEndRef} />
 
         {/* PAGE CONTENT */}
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -282,88 +276,70 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
           <section className="min-w-0">
             {/* price / rating / actions */}
             <div className="mt-6">
-            {/* Row 1: stars + rating */}
-            <div className="flex items-center gap-3">
+              {/* Row 1: stars + rating */}
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                <Stars value={listing.rating} size={32} />
+                  <Stars value={listing.rating} size={32} />
                 </div>
                 <div className="flex items-baseline gap-2">
-                <div className="text-xl font-semibold">{listing.rating.toFixed(1)}</div>
-                <div className="text-xl text-muted-foreground">({listing.reviewsCount})</div>
+                  <div className="text-xl font-semibold">{listing.rating.toFixed(1)}</div>
+                  <div className="text-xl text-muted-foreground">({listing.reviewsCount})</div>
                 </div>
-            </div>
+              </div>
 
-            {/* Row 2: price + actions */}
-            <div className="mt-3 flex items-center justify-between gap-4">
-                <div className="text-4xl font-semibold tracking-tight">
-                {listing.priceLabel}
-                </div>
+              {/* Row 2: price + actions */}
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <div className="text-4xl font-semibold tracking-tight">{listing.priceLabel}</div>
 
                 <div className="flex items-center gap-5">
-                <button
-                    type="button"
-                    aria-label="Save"
-                    className="text-[#71C4FF] hover:opacity-80 transition"
-                >
+                  <button type="button" aria-label="Save" className="text-[#71C4FF] hover:opacity-80 transition">
                     <Heart className="h-9 w-9" />
-                </button>
-                <button
-                    type="button"
-                    aria-label="Share"
-                    className="text-[#71C4FF] hover:opacity-80 transition"
-                >
+                  </button>
+                  <button type="button" aria-label="Share" className="text-[#71C4FF] hover:opacity-80 transition">
                     <Share2 className="h-9 w-9" />
-                </button>
+                  </button>
                 </div>
-            </div>
+              </div>
 
-            {/* Row 3: beds/baths/sqft with dividers */}
-            <div className="mt-5 flex flex-wrap items-center gap-6 text-2xl">
+              {/* Row 3: beds/baths/sqft with dividers */}
+              <div className="mt-5 flex flex-wrap items-center gap-6 text-2xl">
                 <span>
-                <span className="font-semibold">{listing.beds}</span> bd
+                  <span className="font-semibold">{listing.beds}</span> bd
                 </span>
-
                 <span className="text-muted-foreground">|</span>
-
                 <span>
-                <span className="font-semibold">{listing.baths}</span> ba
+                  <span className="font-semibold">{listing.baths}</span> ba
                 </span>
-
                 <span className="text-muted-foreground">|</span>
-
                 <span>
-                <span className="font-semibold">{listing.sqft.toLocaleString()}</span> sq ft
+                  <span className="font-semibold">{listing.sqft.toLocaleString()}</span> sq ft
                 </span>
-            </div>
+              </div>
 
-            {/* Row 4: address */}
-            <div className="mt-6 text-2xl text-muted-foreground">
-                {listing.address}
-            </div>
+              {/* Row 4: address */}
+              <div className="mt-6 text-2xl text-muted-foreground">{listing.address}</div>
             </div>
 
             {/* highlights (plain) */}
             <div className="mt-10">
-            {/* divider before */}
-            <div className="h-px w-full bg-border" />
+              <div className="h-px w-full bg-border" />
 
-            <h2 className="mt-10 text-3xl font-semibold tracking-tight">Highlights</h2>
+              <h2 className="mt-10 text-3xl font-semibold tracking-tight">Highlights</h2>
 
-            <div className="mt-10 grid gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-10 grid gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-3">
                 <HighlightPlain icon={<Shield className="h-10 w-10" />} label="Security" />
                 <HighlightPlain icon={<Trees className="h-10 w-10" />} label="Hardwood flooring" />
                 <HighlightPlain icon={<Sparkles className="h-10 w-10" />} label="Curated art" />
                 <HighlightPlain icon={<Droplets className="h-10 w-10" />} label="In-unit washer & dryer" />
                 <HighlightPlain icon={<BoxIcon className="h-10 w-10" />} label="Internet" />
                 <HighlightPlain icon={<Wind className="h-10 w-10" />} label="AC" />
-            </div>
+              </div>
 
-            <p className="mt-10 text-lg leading-8 text-muted-foreground">
+              <p className="mt-10 text-lg leading-8 text-muted-foreground">
                 Placeholder description text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            </p>
+              </p>
 
-            {/* divider after */}
-            <div className="mt-12 h-px w-full bg-border" />
+              <div className="mt-12 h-px w-full bg-border" />
             </div>
 
             {/* location */}
@@ -459,86 +435,72 @@ export default function ListingPage({ params }: { params: Promise<{ id: string }
           </section>
 
           {/* RIGHT */}
-            <aside className="block">
+          <aside className="block">
             <div className="sticky top-6">
-                <Card className="rounded-2xl p-5">
+              <Card className="rounded-2xl p-5">
                 <div className="text-sm font-semibold">Contact this lister</div>
 
                 <div className="mt-4 flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-semibold">
-                    JB
-                    </div>
-                    <div>
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-semibold">JB</div>
+                  <div>
                     <div className="text-sm font-semibold">Joe Bruin</div>
                     <div className="text-xs text-muted-foreground">Verified</div>
-                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-5 space-y-3 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Mail className="h-4 w-4" />
                     joe.bruin@email.com
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="h-4 w-4" />
                     (323) 555-0199
-                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-6 space-y-3">
-                    <Button className="w-full rounded-2xl bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
-                    Message
-                    </Button>
-                    <Button variant="secondary" className="w-full rounded-2xl">
+                  <Button className="w-full rounded-2xl bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">Message</Button>
+                  <Button variant="secondary" className="w-full rounded-2xl">
                     Request tour
-                    </Button>
+                  </Button>
                 </div>
-                </Card>
+              </Card>
             </div>
-            </aside>
+          </aside>
         </div>
       </main>
 
       {/* RECOMMENDED LISTINGS – FULL WIDTH SECTION */}
-    <section className="mt-24 w-full bg-[#EAF6FF] py-16">
-    <div className="mx-auto max-w-[1300px] px-6">
-        <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Recommended listings</h2>
+      <section className="mt-24 w-full bg-[#EAF6FF] py-16">
+        <div className="mx-auto max-w-[1300px] px-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold">Recommended listings</h2>
 
-        <Button
-            asChild
-            variant="secondary"
-            className="h-8 rounded-full bg-[#3EA6FC] px-5 text-white hover:bg-[#3EA6FC]/80"
-        >
-            <Link
-            href="/search"
-            onClick={onSeeMore}
-            className="inline-flex items-center gap-2"
+            <Button
+              asChild
+              variant="secondary"
+              className="h-8 rounded-full bg-[#3EA6FC] px-5 text-white hover:bg-[#3EA6FC]/80"
             >
-            <Search className="h-4 w-4" />
-            <span>See more</span>
-            </Link>
-        </Button>
-        </div>
+              <Link href="/search" onClick={onSeeMore} className="inline-flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                <span>See more</span>
+              </Link>
+            </Button>
+          </div>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-            <RecommendedCard key={i} />
-        ))}
+          <div className="mt-8 grid gap-8 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <RecommendedCard key={i} />
+            ))}
+          </div>
         </div>
-    </div>
-    </section>
+      </section>
     </div>
   )
 }
 
-function HighlightPlain({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode
-  label: string
-}) {
+function HighlightPlain({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-2">
       <div className="text-[#71C4FF]">{icon}</div>

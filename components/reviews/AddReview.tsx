@@ -88,7 +88,8 @@ export function AddReviewModal({ open, onOpenChange, onSubmit }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 sm:max-w-[900px] h-[85vh] flex flex-col overflow-hidden">
+      {/* ✅ Added `relative` so the gradient overlays can be absolutely positioned */}
+      <DialogContent className="relative p-0 sm:max-w-[900px] h-[85vh] flex flex-col overflow-hidden">
         {/* ================= HEADER ================= */}
         <div
           className={`sticky top-0 z-20 bg-background transition-shadow ${
@@ -238,6 +239,12 @@ export function AddReviewModal({ open, onOpenChange, onSubmit }: Props) {
             />
           </section>
         </div>
+
+        {/* ✅ NEW: Scroll fade overlays (this is the “B” shading) */}
+        {/* Top fade: starts right under your header */}
+        <div className="pointer-events-none absolute left-0 right-0 top-[96px] z-30 h-12 bg-gradient-to-b from-background to-transparent" />
+        {/* Bottom fade: sits right above your footer */}
+        <div className="pointer-events-none absolute left-0 right-0 bottom-[96px] z-30 h-14 bg-gradient-to-t from-background to-transparent" />
 
         {/* ================= FOOTER ================= */}
         <div className="sticky bottom-0 z-20 bg-background border-t">
