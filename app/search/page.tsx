@@ -1,25 +1,20 @@
 "use client"
 
 import * as React from "react"
-import Header from "@/components/Header"
+import SearchHeader from "@/components/SearchHeader"
 import { ListingCard } from "@/components/listings/ListingCard"
+import { BuildingCard, type Building } from "@/components/listings/BuildingCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FiltersDialog, type SearchFilters } from "@/components/search/FiltersDialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Menu, SlidersHorizontal } from "lucide-react"
+import type { SearchFilters } from "@/components/search/FiltersDialog"
+import { cn } from "@/lib/utils"
 
 type SortKey = "price_desc" | "price_asc" | "recent_desc" | "recent_asc"
+type ViewMode = "unit" | "building"
 
 type Listing = {
   id: string
-  priceLabel: string 
+  priceLabel: string
   beds: number
   baths: number
   sqft: number
@@ -38,6 +33,9 @@ function parseMonthlyPrice(priceLabel: string) {
 
 export default function SearchPage() {
   const [sort, setSort] = React.useState<SortKey>("recent_desc")
+  const [query, setQuery] = React.useState("")
+  const [filters, setFilters] = React.useState<SearchFilters | null>(null)
+  const [view, setView] = React.useState<ViewMode>("unit")
 
   const listings: Listing[] = React.useMemo(
     () =>
@@ -51,10 +49,23 @@ export default function SearchPage() {
         rating: 4.7,
         reviewsCount: 17,
         images: [],
-        createdAt: Date.now() - i * 1000 * 60 * 60, // mock "recency"
+        createdAt: Date.now() - i * 1000 * 60 * 60,
       })),
     []
   )
+
+  const buildings: Building[] = React.useMemo(
+  () =>
+    Array.from({ length: 12 }).map((_, i) => ({
+      id: String(i + 1),
+      name: `Building ${i + 1}`,
+      address: "330 De Neve Dr, Los Angeles, CA 90024",
+      rating: 4.7,
+      reviewsCount: 17,
+      images: [],
+    })),
+  []
+)
 
   const sorted = React.useMemo(() => {
     const arr = [...listings]
@@ -78,45 +89,66 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-dvh bg-background">
+      {/* New header for this page */}
+      <SearchHeader
+        query={query}
+        onQueryChange={setQuery}
+        onFiltersSave={(f) => setFilters(f)}
+      />
+
       <main className="mx-auto max-w-[1440px] px-6 py-6">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_520px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_680px]">
           {/* LEFT: listings */}
           <section className="min-w-0">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h1 className="text-sm font-medium text-muted-foreground">
-                Explore 2000 listings near UCLA
-              </h1>
-
-              <div className="flex items-center gap-3">
-                {/* Yellow square (hamburger) */}
-                <SortDropdown value={sort} onChange={setSort} />
-
-                {/* Blue square (filters icon) - optional */}
-                <FiltersDialog
-                  trigger={
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="h-12 w-12 rounded-2xl bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90"
-                      aria-label="Filters"
-                    >
-                      <SlidersHorizontal className="h-6 w-6" />
-                    </Button>
-                  }
-                  onSave={(filters: SearchFilters) => {
-                    console.log("filters saved:", filters)
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Scroll area for left column */}
             <div className="h-[calc(100dvh-170px)] overflow-y-auto pr-1">
-              <div className="grid gap-6 sm:grid-cols-2">
-                {sorted.map((l) => (
-                  <ListingCard key={l.id} listing={l} className="w-full" />
-                ))}
+
+              {/* FULL-WIDTH HEADER */}
+              <div className="mb-6 flex items-center justify-between">
+                <h1 className="text-lg font-semibold">
+                  Over 100 homes
+                </h1>
+
+                <div className="inline-flex rounded-full border border-[#71C4FF] bg-white p-1">
+                  <button
+                    type="button"
+                    onClick={() => setView("building")}
+                    className={cn(
+                      "h-8 rounded-full px-4 text-sm font-medium transition",
+                      view === "building"
+                        ? "bg-[#71C4FF] text-white"
+                        : "bg-transparent text-black hover:bg-[#71C4FF]"
+                    )}
+                  >
+                    Building
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setView("unit")}
+                    className={cn(
+                      "h-8 rounded-full px-4 text-sm font-medium transition",
+                      view === "unit"
+                        ? "bg-[#71C4FF] text-white"
+                        : "bg-transparent text-black hover:bg-[#71C4FF]"
+                    )}
+                  >
+                    Unit
+                  </button>
+                </div>
               </div>
+
+              <div className="mx-auto max-w-[860px]">
+                <div className="grid gap-6 justify-center sm:grid-cols-[repeat(2,minmax(0,360px))]">
+                  {view === "unit"
+                    ? sorted.map((l) => (
+                        <ListingCard key={l.id} listing={l} className="w-full" />
+                      ))
+                    : buildings.map((b) => (
+                        <BuildingCard key={b.id} building={b} className="w-full" />
+                      ))}
+                </div>
+              </div>
+
             </div>
           </section>
 
@@ -124,14 +156,12 @@ export default function SearchPage() {
           <aside className="hidden lg:block">
             <div className="sticky top-[110px]">
               <div className="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
-                {/* map search overlay */}
                 <div className="absolute left-3 top-3 z-10 flex w-[260px] items-center gap-2 rounded-full bg-background/90 p-1 shadow-sm backdrop-blur">
                   <Input
                     placeholder="Search"
                     className="h-8 border-0 bg-transparent px-3 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                   <Button size="icon" className="h-8 w-8 rounded-full" aria-label="Search map">
-                    {/* Just a decorative button for now */}
                     <span className="text-xs font-semibold">Go</span>
                   </Button>
                 </div>
@@ -151,65 +181,5 @@ export default function SearchPage() {
         </div>
       </main>
     </div>
-  )
-}
-
-function SortDropdown({
-  value,
-  onChange,
-}: {
-  value: SortKey
-  onChange: (v: SortKey) => void
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-12 w-12 rounded-2xl bg-[#71C4FF] text-white hover:bg-[#F5C35B]"
-          aria-label="Sort"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        align="start"
-        side="bottom"
-        sideOffset={10}
-        className="w-64 rounded-2xl border-2 p-2 shadow-none"
-      >
-        <DropdownMenuItem
-          className="cursor-pointer rounded-xl px-3 py-2 text-base"
-          onSelect={() => onChange("price_desc")}
-        >
-          Price (high to low)
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          className="cursor-pointer rounded-xl px-3 py-2 text-base"
-          onSelect={() => onChange("price_asc")}
-        >
-          Price (low to high)
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator className="my-1" />
-
-        <DropdownMenuItem
-          className="cursor-pointer rounded-xl px-3 py-2 text-base"
-          onSelect={() => onChange("recent_desc")}
-        >
-          Most recent
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          className="cursor-pointer rounded-xl px-3 py-2 text-base"
-          onSelect={() => onChange("recent_asc")}
-        >
-          Least recent
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   )
 }

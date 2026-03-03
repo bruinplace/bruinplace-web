@@ -1,0 +1,436 @@
+"use client"
+
+import * as React from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Heart, Share2, Star, Mail, Phone, Search } from "lucide-react"
+import { StarIcon as StarSolid } from "@heroicons/react/24/solid"
+import { StarIcon as StarOutline } from "@heroicons/react/24/outline"
+
+import { ListingCard, type UnitListing } from "@/components/listings/ListingCard"
+
+type Building = {
+  id: string
+  name: string
+  address: string
+  rating: number
+  reviewsCount: number
+  images?: string[]
+  // building-level aggregates
+  unitsCount: number
+  priceMin: number
+  priceMax: number
+}
+
+type Review = {
+  id: string
+  name: string
+  dateLabel: string
+  rating: number
+  text: string
+  tags: string[]
+}
+
+const MOCK_BUILDING: Building = {
+  id: "1",
+  name: "The Plaza",
+  address: "10880 Wilshire Blvd, Los Angeles, CA 90024",
+  rating: 4.4,
+  reviewsCount: 41,
+  images: [],
+  unitsCount: 28,
+  priceMin: 1250,
+  priceMax: 2100,
+}
+
+const MOCK_UNITS: UnitListing[] = Array.from({ length: 6 }).map((_, i) => ({
+  id: String(i + 1),
+  priceLabel: `$${(1300 + i * 50).toLocaleString()} per month`,
+  beds: 2,
+  baths: 2,
+  sqft: 1100 + i * 25,
+  address: "10880 Wilshire Blvd, Los Angeles, CA 90024",
+  rating: 4.2,
+  reviewsCount: 17,
+  images: [],
+}))
+
+const MOCK_REVIEWS: Review[] = [
+  {
+    id: "r1",
+    name: "Civic Bruin",
+    dateLabel: "2024 · 3 months ago",
+    rating: 4,
+    text:
+      "Great building overall. Clean common areas and responsive management. Some noise on weekends.",
+    tags: ["Management 5/5", "Cleanliness 4/5", "Noise 3/5", "Value 4/5"],
+  },
+  {
+    id: "r2",
+    name: "Near Anderson",
+    dateLabel: "2023 · 1 year ago",
+    rating: 5,
+    text: "Awesome location and amenities. Parking is the only downside.",
+    tags: ["Amenities 5/5", "Location 5/5", "Parking 3/5", "Value 4/5"],
+  },
+]
+
+function ImagePlaceholder({ className }: { className?: string }) {
+  return <div className={`h-full w-full bg-muted ${className ?? ""}`} />
+}
+
+function Stars({ value, size = 22 }: { value: number; size?: number }) {
+  const fullStars = Math.floor(value)
+  const hasPartial = value % 1 !== 0
+  const partialFill = value % 1
+
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, i) => {
+        if (i < fullStars) {
+          return (
+            <StarSolid
+              key={i}
+              className="text-[#F6C24A]"
+              style={{ width: size, height: size }}
+            />
+          )
+        }
+        if (i === fullStars && hasPartial) {
+          return (
+            <svg key={i} width={size} height={size} viewBox="0 0 24 24">
+              <defs>
+                <linearGradient id={`star-grad-${i}`}>
+                  <stop offset={`${partialFill * 100}%`} stopColor="#F6C24A" />
+                  <stop offset={`${partialFill * 100}%`} stopColor="rgba(0,0,0,0.2)" />
+                </linearGradient>
+              </defs>
+              <StarSolid fill={`url(#star-grad-${i})`} />
+            </svg>
+          )
+        }
+        return (
+          <StarOutline
+            key={i}
+            className="text-muted-foreground/40"
+            style={{ width: size, height: size }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function RatingBars() {
+  const rows = [
+    { label: "5 stars", pct: 0.72 },
+    { label: "4 stars", pct: 0.55 },
+    { label: "3 stars", pct: 0.18 },
+    { label: "2 stars", pct: 0.08 },
+    { label: "1 star", pct: 0.12 },
+  ]
+  return (
+    <div className="space-y-2">
+      {rows.map((r) => (
+        <div key={r.label} className="grid grid-cols-[64px_1fr] items-center gap-3">
+          <div className="text-xs text-muted-foreground">{r.label}</div>
+          <div className="h-2 rounded-full bg-muted">
+            <div
+              className="h-2 rounded-full bg-[#71C4FF]"
+              style={{ width: `${Math.round(r.pct * 100)}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export default function BuildingPage({ params }: { params: { id: string } }) {
+  const building = { ...MOCK_BUILDING, id: params.id }
+
+  return (
+    <div className="min-h-dvh bg-background">
+      <main className="mx-auto max-w-[1300px] px-6 py-8">
+        {/* FULL-WIDTH GALLERY (same as listing page) */}
+        <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
+          <div className="relative overflow-hidden rounded-2xl bg-muted">
+            <div className="aspect-[16/9] max-h-[520px] w-full">
+              <ImagePlaceholder />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="relative overflow-hidden rounded-2xl bg-muted">
+                <div className="aspect-[16/9]">
+                  <ImagePlaceholder />
+                </div>
+
+                {i === 3 && (
+                  <div className="absolute bottom-3 right-3">
+                    <Button className="rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
+                      See all photos
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* PAGE CONTENT */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
+          {/* LEFT */}
+          <section className="min-w-0">
+            {/* Header: name, rating, actions */}
+            <div className="mt-6">
+              <div className="flex items-center gap-3">
+                <Stars value={building.rating} size={32} />
+                <div className="flex items-baseline gap-2">
+                  <div className="text-xl font-semibold">{building.rating.toFixed(1)}</div>
+                  <div className="text-xl text-muted-foreground">({building.reviewsCount})</div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-4xl font-semibold tracking-tight">{building.name}</div>
+                  <div className="mt-2 text-2xl text-muted-foreground">{building.address}</div>
+                  <div className="mt-3 text-xl">
+                    From{" "}
+                    <span className="font-semibold">
+                      ${building.priceMin.toLocaleString()}
+                    </span>{" "}
+                    –{" "}
+                    <span className="font-semibold">
+                      ${building.priceMax.toLocaleString()}
+                    </span>{" "}
+                    / month
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-5">
+                  <button
+                    type="button"
+                    aria-label="Save"
+                    className="text-[#71C4FF] hover:opacity-80 transition"
+                  >
+                    <Heart className="h-9 w-9" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Share"
+                    className="text-[#71C4FF] hover:opacity-80 transition"
+                  >
+                    <Share2 className="h-9 w-9" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats row (building-specific) */}
+              <div className="mt-5 flex flex-wrap items-center gap-6 text-2xl">
+                <span>
+                  <span className="font-semibold">{building.unitsCount}</span> units
+                </span>
+                <span className="text-muted-foreground">|</span>
+                <span>
+                  <span className="font-semibold">12</span> min walk
+                </span>
+                <span className="text-muted-foreground">|</span>
+                <span>
+                  <span className="font-semibold">Parking</span> available
+                </span>
+              </div>
+            </div>
+
+            {/* Units section (key difference vs listing page) */}
+            <div className="mt-10">
+              <div className="h-px w-full bg-border" />
+              <div className="mt-10 flex items-center justify-between gap-3">
+                <h2 className="text-3xl font-semibold tracking-tight">Units</h2>
+                <Button variant="secondary" className="rounded-full">
+                  View all
+                </Button>
+              </div>
+
+              <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {MOCK_UNITS.map((u) => (
+                  <ListingCard key={u.id} listing={u} className="w-full" />
+                ))}
+              </div>
+
+              <div className="mt-12 h-px w-full bg-border" />
+            </div>
+
+            {/* Location */}
+            <div className="mt-10">
+              <h2 className="text-lg font-semibold">Location</h2>
+              <div className="mt-4 overflow-hidden rounded-2xl border bg-card">
+                <div className="aspect-[16/7] w-full bg-muted">
+                  <iframe
+                    title="Map"
+                    className="h-full w-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src="https://www.google.com/maps?q=UCLA&z=14&output=embed"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 p-4">
+                  <Badge variant="secondary" className="rounded-full">
+                    Distance from Bruin Bear
+                  </Badge>
+                  <Badge variant="secondary" className="rounded-full">
+                    12 min walk
+                  </Badge>
+                  <Badge variant="secondary" className="rounded-full">
+                    5 min drive
+                  </Badge>
+                  <Badge variant="secondary" className="rounded-full">
+                    7 min scooter
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Reviews (same as listing page) */}
+            <div className="mt-10">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold">Reviews ({MOCK_REVIEWS.length})</h2>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" className="rounded-full">
+                    Add review
+                  </Button>
+                  <Button variant="secondary" className="rounded-full">
+                    Sort by
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
+                <div className="space-y-4">
+                  {MOCK_REVIEWS.map((r) => (
+                    <Card key={r.id} className="rounded-2xl p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="font-semibold">{r.name}</div>
+                          <div className="text-xs text-muted-foreground">{r.dateLabel}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Stars value={r.rating} size={22} />
+                          <span className="ml-2 text-sm font-medium">{r.rating.toFixed(1)}</span>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{r.text}</p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {r.tags.map((t) => (
+                          <Badge key={t} variant="secondary" className="rounded-full">
+                            {t}
+                          </Badge>
+                        ))}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                <Card className="h-fit rounded-2xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl font-semibold">{building.rating.toFixed(1)}</div>
+                    <div>
+                      <Stars value={building.rating} />
+                      <div className="text-xs text-muted-foreground">{building.reviewsCount} reviews</div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <RatingBars />
+                  </div>
+                  <div className="mt-4">
+                    <Input placeholder="Search reviews…" className="rounded-full" />
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </section>
+
+          {/* RIGHT: contact */}
+          <aside className="block">
+            <div className="sticky top-6">
+              <Card className="rounded-2xl p-5">
+                <div className="text-sm font-semibold">Contact this building</div>
+
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-semibold">
+                    TP
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">The Plaza</div>
+                    <div className="text-xs text-muted-foreground">Verified</div>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="h-4 w-4" />
+                    leasing@theplaza.com
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="h-4 w-4" />
+                    (323) 555-0199
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-3">
+                  <Button className="w-full rounded-2xl bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
+                    Message
+                  </Button>
+                  <Button variant="secondary" className="w-full rounded-2xl">
+                    Request tour
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {/* Recommended section (same vibe) */}
+      <section className="mt-24 w-full bg-[#EAF6FF] py-16">
+        <div className="mx-auto max-w-[1300px] px-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold">Recommended buildings</h2>
+
+            <Button
+              asChild
+              variant="secondary"
+              className="h-8 rounded-full bg-[#3EA6FC] px-5 text-white hover:bg-[#3EA6FC]/80"
+            >
+              <Link href="/search" className="inline-flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                <span>See more</span>
+              </Link>
+            </Button>
+          </div>
+
+          {/* You can render BuildingCard here later */}
+          <div className="mt-8 grid gap-8 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="rounded-2xl p-3 shadow-lg">
+                <div className="aspect-[16/10] overflow-hidden rounded-xl bg-muted" />
+                <div className="mt-3">
+                  <div className="text-lg font-semibold">Building {i + 1}</div>
+                  <div className="text-xs text-muted-foreground">Los Angeles, CA</div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}

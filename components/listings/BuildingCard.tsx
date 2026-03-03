@@ -9,26 +9,23 @@ import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { ChevronLeft, ChevronRight, Heart, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type UnitListing = {
-  id: string
-  priceLabel: string
-  beds: number
-  baths: number
-  sqft: number
+export type Building = {
+  id: string,
+  name: string,
   address: string
   rating: number
   reviewsCount: number
   images?: string[]
 }
 
-export function ListingCard({
-  listing,
+export function BuildingCard({
+  building,
   className,
 }: {
-  listing: UnitListing
+  building: Building
   className?: string
 }) {
-  const images = listing.images?.length ? listing.images : []
+  const images = building.images?.length ? building.images : []
   const [active, setActive] = React.useState(0)
 
   function prev() {
@@ -46,7 +43,7 @@ export function ListingCard({
   }
 
   return (
-    <Link href={`/listings/${listing.id}`} className="block">
+    <Link href={`/building/${building.id}`} className="block">
       <Card
         className={cn(
           "w-full rounded-2xl p-3 shadow-lg transition hover:shadow-xl",
@@ -60,7 +57,7 @@ export function ListingCard({
               {images.length ? (
                 <Image
                   src={images[active]}
-                  alt={listing.address}
+                  alt={building.address}
                   fill
                   className="object-cover"
                   sizes="(min-width: 640px) 360px, 100vw"
@@ -76,6 +73,7 @@ export function ListingCard({
               size="icon"
               onClick={(e) => {
                 stopLink(e)
+                // TODO: save listing
               }}
               className="absolute right-3 top-3 h-9 w-9 rounded-full bg-background/70 backdrop-blur hover:bg-background/80"
               aria-label="Save listing"
@@ -136,26 +134,23 @@ export function ListingCard({
 
           {/* Content */}
           <div className="space-y-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <div className="text-sm font-semibold leading-none">
-                {listing.priceLabel}
+            <div className="flex items-baseline justify-between">
+
+              <div className="space-y-0.5">
+                <div className="text-lg font-semibold leading-none">{building.name}</div>
               </div>
 
-              <div className="flex items-center gap-1 text-xs font-medium">
-                <Star className="h-3 w-3 fill-current text-muted-foreground" />
-                <span>{listing.rating.toFixed(1)}</span>
+              <div className="flex items-center gap-1 text-sm font-medium">
+                <Star className="h-4 w-4 fill-current text-muted-foreground" />
+                <span>{building.rating.toFixed(1)}</span>
                 <span className="text-muted-foreground">
-                  ({listing.reviewsCount})
+                  ({building.reviewsCount})
                 </span>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="text-xs">
-                {listing.beds} bd &nbsp;|&nbsp; {listing.baths} ba &nbsp;|&nbsp;{" "}
-                {listing.sqft.toLocaleString()} sq ft
-              </div>
-              <div className="text-xs text-muted-foreground">{listing.address}</div>
+            <div className="space-y-0.5">
+              <div className="text-xs text-muted-foreground">{building.address}</div>
             </div>
           </div>
         </div>

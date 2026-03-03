@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import { ListingCard } from "@/components/listings/ListingCard"
+import { BuildingCard } from "@/components/listings/BuildingCard"
 
 type ListingRowProps = {
   title: string
@@ -40,7 +40,7 @@ export function ListingRow({ title, listings, onSeeMore }: ListingRowProps) {
 
       <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
         {visible.map((l) => (
-          <ListingCard key={l.id} listing={l} className="w-full" />
+          <BuildingCard key={l.id} building={l} className="w-full" />
         ))}
       </div>
     </section>

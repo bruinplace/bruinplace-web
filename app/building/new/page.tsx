@@ -52,7 +52,7 @@ function Stepper({
   value,
   onChange,
   min = 0,
-  max = 99,
+  max = 999,
 }: {
   value: number;
   onChange: (next: number) => void;
@@ -89,17 +89,18 @@ function Stepper({
   );
 }
 
-export default function NewListingPage() {
+export default function NewBuildingPage() {
+  const [buildingName, setBuildingName] = React.useState("");
   const [address, setAddress] = React.useState("");
-  const [unitNumber, setUnitNumber] = React.useState("");
-  const [rent, setRent] = React.useState<string>("");
-  const [deposit, setDeposit] = React.useState<string>("");
 
-  const [bedrooms, setBedrooms] = React.useState(4);
-  const [bathrooms, setBathrooms] = React.useState(4);
-  const [months, setMonths] = React.useState(4);
-  const [spots, setSpots] = React.useState(4);
+  const [website, setWebsite] = React.useState("");
+  const [contactEmail, setContactEmail] = React.useState("");
+  const [contactPhone, setContactPhone] = React.useState("");
 
+  const [unitsCount, setUnitsCount] = React.useState(20);
+  const [parkingSpots, setParkingSpots] = React.useState(0);
+
+  const [amenities, setAmenities] = React.useState("");
   const [comments, setComments] = React.useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -107,18 +108,18 @@ export default function NewListingPage() {
 
     // Replace with a POST to your API / server action.
     const payload = {
+      buildingName,
       address,
-      unitNumber,
-      rent: rent ? Number(rent) : null,
-      deposit: deposit ? Number(deposit) : null,
-      bedrooms,
-      bathrooms,
-      leaseMonths: months,
-      parkingSpots: spots,
+      website: website || null,
+      contactEmail: contactEmail || null,
+      contactPhone: contactPhone || null,
+      unitsCount,
+      parkingSpots,
+      amenities: amenities || null,
       comments,
     };
 
-    console.log("LISTING SUBMIT:", payload);
+    console.log("BUILDING SUBMIT:", payload);
     alert("Saved (check console for payload).");
   };
 
@@ -130,97 +131,95 @@ export default function NewListingPage() {
       >
         {/* Title */}
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-zinc-900">Add your lease</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">Add a building</h1>
         </div>
 
-        {/* Address */}
+        {/* Building name */}
         <div className="mb-5">
           <label className="mb-2 block text-sm font-semibold text-zinc-900">
-            Address
-          </label>
-          <Input value={address} onChange={(e) => setAddress(e.target.value)} />
-        </div>
-
-        {/* Unit number */}
-        <div className="mb-6">
-          <label className="mb-2 block text-sm font-semibold text-zinc-900">
-            Unit number
+            Building name
           </label>
           <Input
-            value={unitNumber}
-            onChange={(e) => setUnitNumber(e.target.value)}
+            value={buildingName}
+            onChange={(e) => setBuildingName(e.target.value)}
+            placeholder="e.g., The Plaza"
           />
         </div>
 
-        {/* Rent + Deposit (2 columns) */}
+        {/* Address */}
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-semibold text-zinc-900">
+            Address
+          </label>
+          <Input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Street, City, State ZIP"
+          />
+        </div>
+
+        {/* Website */}
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-semibold text-zinc-900">
+            Website (optional)
+          </label>
+          <Input
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            placeholder="https://..."
+          />
+        </div>
+
+        {/* Contact (2 columns) */}
         <div className="mb-6 grid grid-cols-2 gap-10">
           <div>
             <label className="mb-2 block text-sm font-semibold text-zinc-900">
-              Rent
+              Contact email
             </label>
             <Input
-              value={rent}
-              onChange={(e) => setRent(e.target.value.replace(/[^\d]/g, ""))}
-              inputMode="numeric"
-              className="w-24"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="leasing@..."
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-zinc-900">
-              Deposit
+              Contact phone
             </label>
             <Input
-              value={deposit}
-              onChange={(e) => setDeposit(e.target.value.replace(/[^\d]/g, ""))}
-              inputMode="numeric"
-              className="w-24"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="(###) ###-####"
             />
           </div>
         </div>
 
-        {/* Bed and Bath */}
+        {/* Counts */}
         <div className="mb-6">
-          <div className="mb-2 text-sm font-semibold text-zinc-900">
-            Bed and Bath
+          <div className="mb-2 text-sm font-semibold text-zinc-900">Building details</div>
+
+          <div className="flex items-center justify-between py-2">
+            <div className="text-xs text-zinc-700">Total units</div>
+            <Stepper value={unitsCount} onChange={setUnitsCount} min={0} max={999} />
           </div>
 
           <div className="flex items-center justify-between py-2">
-            <div className="text-xs text-zinc-700">Bedrooms</div>
-            <Stepper value={bedrooms} onChange={setBedrooms} min={0} max={10} />
-          </div>
-
-          <div className="flex items-center justify-between py-2">
-            <div className="text-xs text-zinc-700">Bathrooms</div>
-            <Stepper
-              value={bathrooms}
-              onChange={setBathrooms}
-              min={0}
-              max={10}
-            />
+            <div className="text-xs text-zinc-700">Parking spots</div>
+            <Stepper value={parkingSpots} onChange={setParkingSpots} min={0} max={999} />
           </div>
         </div>
 
-        {/* Lease Length */}
+        {/* Amenities */}
         <div className="mb-6">
-          <div className="mb-2 text-sm font-semibold text-zinc-900">
-            Lease Length
-          </div>
-
-          <div className="flex items-center justify-between py-2">
-            <div className="text-xs text-zinc-700">Months</div>
-            <Stepper value={months} onChange={setMonths} min={1} max={24} />
-          </div>
-        </div>
-
-        {/* Parking */}
-        <div className="mb-6">
-          <div className="mb-2 text-sm font-semibold text-zinc-900">Parking</div>
-
-          <div className="flex items-center justify-between py-2">
-            <div className="text-xs text-zinc-700">Spots</div>
-            <Stepper value={spots} onChange={setSpots} min={0} max={10} />
-          </div>
+          <label className="mb-2 block text-sm font-semibold text-zinc-900">
+            Amenities (optional)
+          </label>
+          <Input
+            value={amenities}
+            onChange={(e) => setAmenities(e.target.value)}
+            placeholder="Gym, pool, laundry, AC..."
+          />
         </div>
 
         {/* Additional Comments */}
