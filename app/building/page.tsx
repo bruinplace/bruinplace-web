@@ -7,8 +7,6 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Heart, Share2, Star, Mail, Phone, Search } from "lucide-react"
-import { StarIcon as StarSolid } from "@heroicons/react/24/solid"
-import { StarIcon as StarOutline } from "@heroicons/react/24/outline"
 
 import { ListingCard, type UnitListing } from "@/components/listings/ListingCard"
 
@@ -86,34 +84,37 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
   const fullStars = Math.floor(value)
   const hasPartial = value % 1 !== 0
   const partialFill = value % 1
+  const gradientPrefix = React.useId().replace(/:/g, "")
 
   return (
     <div className="flex items-center gap-1">
       {Array.from({ length: 5 }).map((_, i) => {
         if (i < fullStars) {
           return (
-            <StarSolid
+            <Star
               key={i}
               className="text-[#F6C24A]"
               style={{ width: size, height: size }}
+              fill="currentColor"
             />
           )
         }
         if (i === fullStars && hasPartial) {
+          const gradientId = `${gradientPrefix}-star-grad-${i}`
           return (
             <svg key={i} width={size} height={size} viewBox="0 0 24 24">
               <defs>
-                <linearGradient id={`star-grad-${i}`}>
+                <linearGradient id={gradientId}>
                   <stop offset={`${partialFill * 100}%`} stopColor="#F6C24A" />
                   <stop offset={`${partialFill * 100}%`} stopColor="rgba(0,0,0,0.2)" />
                 </linearGradient>
               </defs>
-              <StarSolid fill={`url(#star-grad-${i})`} />
+              <Star fill={`url(#${gradientId})`} stroke="#F6C24A" />
             </svg>
           )
         }
         return (
-          <StarOutline
+          <Star
             key={i}
             className="text-muted-foreground/40"
             style={{ width: size, height: size }}

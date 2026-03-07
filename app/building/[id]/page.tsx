@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-//import { StarIcon as StarSolid } from "@heroicons/react/24/solid"
-//import { StarIcon as StarOutline } from "@heroicons/react/24/outline"
 import {
   Heart,
   Share2,
@@ -87,36 +85,39 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
   const fullStars = Math.floor(value)
   const hasPartial = value % 1 !== 0
   const partialFill = value % 1
+  const gradientPrefix = React.useId().replace(/:/g, "")
 
   return (
     <div className="flex items-center gap-1">
       {Array.from({ length: 5 }).map((_, i) => {
         if (i < fullStars) {
           return (
-            <StarSolid
+            <Star
               key={i}
               className="text-[#F6C24A]"
               style={{ width: size, height: size }}
+              fill="currentColor"
             />
           )
         }
 
         if (i === fullStars && hasPartial) {
+          const gradientId = `${gradientPrefix}-star-grad-${i}`
           return (
             <svg key={i} width={size} height={size} viewBox="0 0 24 24">
               <defs>
-                <linearGradient id={`star-grad-${i}`}>
+                <linearGradient id={gradientId}>
                   <stop offset={`${partialFill * 100}%`} stopColor="#F6C24A" />
                   <stop offset={`${partialFill * 100}%`} stopColor="rgba(0,0,0,0.2)" />
                 </linearGradient>
               </defs>
-              <StarSolid fill={`url(#star-grad-${i})`} />
+              <Star fill={`url(#${gradientId})`} stroke="#F6C24A" />
             </svg>
           )
         }
 
         return (
-          <StarOutline
+          <Star
             key={i}
             className="text-muted-foreground/40"
             style={{ width: size, height: size }}
@@ -197,8 +198,9 @@ function RecommendedBuildingCard() {
   )
 }
 
-export default function BuildingPage({ params }: { params: { id: string } }) {
-  const building = { ...MOCK_BUILDING, id: params.id }
+export default function BuildingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params)
+  const building = { ...MOCK_BUILDING, id }
   const onSeeMore = () => {}
 
   return (
