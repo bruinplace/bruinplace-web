@@ -2,7 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+If first time running:
+
+```bash
+npm install
+```
+
+Next, run the development server:
 
 ```bash
 npm run dev
@@ -15,6 +21,10 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### API test
+
+To test the API client and sample data: [http://localhost:3000/samples](http://localhost:3000/samples). Set `NEXT_PUBLIC_API_BASE_URL` in `.env` (see `.env.example`) and ensure the backend is running.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

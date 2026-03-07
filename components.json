@@ -5,13 +5,20 @@
   "tsx": true,
   "tailwind": {
     "config": "",
+<<<<<<< HEAD
     "css": "app/globals.css",
+=======
+    "css": "src/app/globals.css",
+>>>>>>> origin/main
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
   "iconLibrary": "lucide",
+<<<<<<< HEAD
   "rtl": false,
+=======
+>>>>>>> origin/main
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
