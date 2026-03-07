@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { Phone, Mail, Instagram } from "lucide-react";
 
-function ContactChip({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function ContactChip({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm">
       <span className="text-sky-600">{icon}</span>
@@ -54,9 +48,18 @@ export default function Footer() {
             </div>
 
             <div className="flex flex-1 items-center justify-between gap-4">
-              <ContactChip icon={<Phone className="h-4 w-4" />} text="(123) 456-789" />
-              <ContactChip icon={<Mail className="h-4 w-4" />} text="bruinplacegmail.com" />
-              <ContactChip icon={<Instagram className="h-4 w-4" />} text="@bruinplace" />
+              <ContactChip
+                icon={<Phone className="h-4 w-4" />}
+                text="(123) 456-789"
+              />
+              <ContactChip
+                icon={<Mail className="h-4 w-4" />}
+                text="bruinplacegmail.com"
+              />
+              <ContactChip
+                icon={<Instagram className="h-4 w-4" />}
+                text="@bruinplace"
+              />
             </div>
           </div>
         </div>
@@ -72,8 +75,24 @@ export default function Footer() {
               strokeWidth="3"
               strokeLinecap="round"
             />
-            <circle cx="420" cy="95" r="55" fill="none" stroke="white" strokeWidth="3" />
-            <rect x="380" y="130" width="90" height="70" rx="18" fill="none" stroke="white" strokeWidth="3" />
+            <circle
+              cx="420"
+              cy="95"
+              r="55"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+            />
+            <rect
+              x="380"
+              y="130"
+              width="90"
+              height="70"
+              rx="18"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+            />
             <path
               d="M410 165 L440 165"
               stroke="white"

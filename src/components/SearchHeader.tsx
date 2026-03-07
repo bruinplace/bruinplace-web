@@ -1,28 +1,31 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Plus, Search, SlidersHorizontal, User, UserCog } from "lucide-react"
+import Link from "next/link";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, Search, SlidersHorizontal, User, UserCog } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"
-import { FiltersDialog, type SearchFilters } from "@/components/search/FiltersDialog"
+} from "@/components/ui/dialog";
+import {
+  FiltersDialog,
+  type SearchFilters,
+} from "@/components/search/FiltersDialog";
 
 export default function SearchHeader({
   query,
   onQueryChange,
   onFiltersSave,
 }: {
-  query: string
-  onQueryChange: (v: string) => void
-  onFiltersSave: (filters: SearchFilters) => void
+  query: string;
+  onQueryChange: (v: string) => void;
+  onFiltersSave: (filters: SearchFilters) => void;
 }) {
-  const [signInOpen, setSignInOpen] = useState(false)
+  const [signInOpen, setSignInOpen] = useState(false);
 
   return (
     <>
@@ -110,9 +113,7 @@ export default function SearchHeader({
 
       {/* Sign in pop-up (same as your current one) */}
       <Dialog open={signInOpen} onOpenChange={setSignInOpen}>
-        <DialogContent
-          className="w-[411px] max-w-none rounded-[25px] p-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.25)] border-0"
-        >
+        <DialogContent className="w-[411px] max-w-none rounded-[25px] p-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.25)] border-0">
           <DialogTitle className="sr-only">Sign in</DialogTitle>
           <DialogDescription className="sr-only">
             You need an account to create a review.
@@ -134,8 +135,8 @@ export default function SearchHeader({
             <Button
               className="h-[42px] w-[220px] rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]"
               onClick={() => {
-                setSignInOpen(false)
-                window.location.href = "/signup"
+                setSignInOpen(false);
+                window.location.href = "/signup";
               }}
             >
               Create account
@@ -147,13 +148,15 @@ export default function SearchHeader({
               <div className="h-px flex-1 bg-zinc-200" />
             </div>
 
-            <div className="text-sm text-zinc-700">Already have an account?</div>
+            <div className="text-sm text-zinc-700">
+              Already have an account?
+            </div>
 
             <Button
               className="h-[42px] w-[220px] rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]"
               onClick={() => {
-                setSignInOpen(false)
-                window.location.href = "/signin"
+                setSignInOpen(false);
+                window.location.href = "/signin";
               }}
             >
               Sign in
@@ -162,5 +165,5 @@ export default function SearchHeader({
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

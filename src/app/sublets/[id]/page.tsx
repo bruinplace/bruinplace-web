@@ -1,8 +1,4 @@
-export default function SubletPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+export default function SubletPage({ params }: { params: { id: string } }) {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold">Sublet</h1>
@@ -15,5 +11,5 @@ export default function SubletPage({
         Sublet details coming soon 🚧
       </div>
     </div>
-  )
+  );
 }

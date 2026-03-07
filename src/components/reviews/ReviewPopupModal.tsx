@@ -1,43 +1,43 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useEffect, useRef, useState } from "react"
-import { X, ChevronRight } from "lucide-react"
+import * as React from "react";
+import { useEffect, useRef, useState } from "react";
+import { X, ChevronRight } from "lucide-react";
 
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 type Chip = {
-  icon?: React.ReactNode
-  label: string
-}
+  icon?: React.ReactNode;
+  label: string;
+};
 
 type ReviewPopupModalProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 
-  chips: Chip[] // should contain 4 items
+  chips: Chip[]; // should contain 4 items
 
   user: {
-    initials: string
-    name: string
-    years: string
-  }
+    initials: string;
+    name: string;
+    years: string;
+  };
 
-  rating: number
-  text: string
+  rating: number;
+  text: string;
 
-  mainImageUrl: string
+  mainImageUrl: string;
 
-  thumbnails: string[]
-  activeThumbIndex: number
-  onSelectThumb: (index: number) => void
-  onNext?: () => void
-}
+  thumbnails: string[];
+  activeThumbIndex: number;
+  onSelectThumb: (index: number) => void;
+  onNext?: () => void;
+};
 
 function Stars({ value }: { value: number }) {
-  const full = Math.round(value)
+  const full = Math.round(value);
 
   return (
     <div className="flex items-center gap-2">
@@ -46,14 +46,14 @@ function Stars({ value }: { value: number }) {
           key={i}
           className={cn(
             "text-3xl leading-none select-none",
-            i < full ? "text-amber-400" : "text-amber-200"
+            i < full ? "text-amber-400" : "text-amber-200",
           )}
         >
           ★
         </span>
       ))}
     </div>
-  )
+  );
 }
 
 export function ReviewPopupModal({
@@ -69,38 +69,38 @@ export function ReviewPopupModal({
   onSelectThumb,
   onNext,
 }: ReviewPopupModalProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [scrolled, setScrolled] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const onScroll = () => setScrolled(el.scrollTop > 0)
-    onScroll()
-    el.addEventListener("scroll", onScroll)
-    return () => el.removeEventListener("scroll", onScroll)
-  }, [])
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 0);
+    onScroll();
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-     <DialogContent
-  showCloseButton={false}
-  className={cn(
-    "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-    "w-[95vw] sm:w-full sm:max-w-[980px]",
-    "h-[82vh]",
-    "p-0 overflow-hidden flex flex-col",
-    "rounded-[28px] border-0",
-    "shadow-[0_20px_60px_rgba(0,0,0,0.18)] bg-background"
-  )}
->
+      <DialogContent
+        showCloseButton={false}
+        className={cn(
+          "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+          "w-[95vw] sm:w-full sm:max-w-[980px]",
+          "h-[82vh]",
+          "p-0 overflow-hidden flex flex-col",
+          "rounded-[28px] border-0",
+          "shadow-[0_20px_60px_rgba(0,0,0,0.18)] bg-background",
+        )}
+      >
         <DialogTitle className="sr-only">Review pop-up</DialogTitle>
 
         {/* ===== Sticky Header with 4 Centered Pills ===== */}
         <div
           className={cn(
             "sticky top-0 z-20 bg-background",
-            scrolled ? "shadow-[0_10px_22px_rgba(0,0,0,0.10)]" : ""
+            scrolled ? "shadow-[0_10px_22px_rgba(0,0,0,0.10)]" : "",
           )}
         >
           <div className="relative px-10 sm:px-14 py-5">
@@ -113,13 +113,11 @@ export function ReviewPopupModal({
                     "inline-flex items-center gap-3",
                     "h-10 rounded-full px-5",
                     "border border-sky-300",
-                    "text-sky-500"
+                    "text-sky-500",
                   )}
                 >
                   {c.icon && (
-                    <span className="[&_svg]:h-5 [&_svg]:w-5">
-                      {c.icon}
-                    </span>
+                    <span className="[&_svg]:h-5 [&_svg]:w-5">{c.icon}</span>
                   )}
                   <span className="text-sm font-medium whitespace-nowrap">
                     {c.label}
@@ -160,7 +158,7 @@ export function ReviewPopupModal({
 
               <div className="mt-7 flex items-center gap-6">
                 {thumbnails.slice(0, 3).map((url, idx) => {
-                  const active = idx === activeThumbIndex
+                  const active = idx === activeThumbIndex;
                   return (
                     <button
                       key={idx}
@@ -170,7 +168,7 @@ export function ReviewPopupModal({
                         "rounded-2xl overflow-hidden border-[4px] transition",
                         active
                           ? "border-sky-400"
-                          : "border-transparent hover:border-sky-200"
+                          : "border-transparent hover:border-sky-200",
                       )}
                     >
                       <img
@@ -179,7 +177,7 @@ export function ReviewPopupModal({
                         className="h-[92px] w-[140px] object-cover"
                       />
                     </button>
-                  )
+                  );
                 })}
 
                 {thumbnails[activeThumbIndex + 1] && (
@@ -239,5 +237,5 @@ export function ReviewPopupModal({
         />
       </DialogContent>
     </Dialog>
-  )
+  );
 }

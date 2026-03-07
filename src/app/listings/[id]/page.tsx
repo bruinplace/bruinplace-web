@@ -1,14 +1,12 @@
+"use client";
 
+import React from "react";
+import Link from "next/link";
 
-"use client"
-
-import React from "react"
-import Link from "next/link"
-
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 import {
   Heart,
@@ -23,27 +21,27 @@ import {
   Phone,
   BoxIcon,
   Search,
-} from "lucide-react"
+} from "lucide-react";
 
 type Listing = {
-  id: string
-  priceLabel: string
-  beds: number
-  baths: number
-  sqft: number
-  address: string
-  rating: number
-  reviewsCount: number
-}
+  id: string;
+  priceLabel: string;
+  beds: number;
+  baths: number;
+  sqft: number;
+  address: string;
+  rating: number;
+  reviewsCount: number;
+};
 
 type Review = {
-  id: string
-  name: string
-  dateLabel: string
-  rating: number
-  text: string
-  tags: string[]
-}
+  id: string;
+  name: string;
+  dateLabel: string;
+  rating: number;
+  text: string;
+  tags: string[];
+};
 
 const MOCK_LISTING: Listing = {
   id: "1",
@@ -54,7 +52,7 @@ const MOCK_LISTING: Listing = {
   address: "10580 Wilshire Blvd, Los Angeles, CA 90024",
   rating: 4.4,
   reviewsCount: 3,
-}
+};
 
 const MOCK_REVIEWS: Review[] = [
   {
@@ -62,9 +60,13 @@ const MOCK_REVIEWS: Review[] = [
     name: "Josie Bruin",
     dateLabel: "2024 · 3 months ago",
     rating: 4,
-    text:
-      "Nice place, commute was easier and there are plenty of food spots nearby. The unit was clean and management was responsive.",
-    tags: ["Management 5/5", "Cleanliness 4/5", "Noise level 3/5", "Lease flexibility 4/5"],
+    text: "Nice place, commute was easier and there are plenty of food spots nearby. The unit was clean and management was responsive.",
+    tags: [
+      "Management 5/5",
+      "Cleanliness 4/5",
+      "Noise level 3/5",
+      "Lease flexibility 4/5",
+    ],
   },
   {
     id: "r2",
@@ -72,7 +74,12 @@ const MOCK_REVIEWS: Review[] = [
     dateLabel: "2023 · 1 year ago",
     rating: 5,
     text: "Great spot. The pool area is nice and the gym is decent. A bit of street noise during rush hour.",
-    tags: ["Management 4/5", "Cleanliness 5/5", "Noise level 3/5", "Lease flexibility 5/5"],
+    tags: [
+      "Management 4/5",
+      "Cleanliness 5/5",
+      "Noise level 3/5",
+      "Lease flexibility 5/5",
+    ],
   },
   {
     id: "r3",
@@ -80,28 +87,29 @@ const MOCK_REVIEWS: Review[] = [
     dateLabel: "2022 · 2 years ago",
     rating: 4,
     text: "Solid apartment overall. Maintenance was quick and the location is hard to beat. Parking can be tight.",
-    tags: ["Management 4/5", "Cleanliness 4/5", "Noise level 4/5", "Lease flexibility 4/5"],
+    tags: [
+      "Management 4/5",
+      "Cleanliness 4/5",
+      "Noise level 4/5",
+      "Lease flexibility 4/5",
+    ],
   },
-]
+];
 
 /**
  * Lucide-based stars with decimal support (e.g., 4.4).
  * Uses an overlay fill clipped to a percentage width for partial stars.
  */
 
-
-
-
-
 function Stars({ value, size = 22 }: { value: number; size?: number }) {
-  const full = Math.floor(value)
-  const frac = value - full
+  const full = Math.floor(value);
+  const frac = value - full;
 
   return (
     <div className="flex items-center gap-1">
       {Array.from({ length: 5 }).map((_, i) => {
-        const isFull = i < full
-        const isPartial = i === full && frac > 0
+        const isFull = i < full;
+        const isPartial = i === full && frac > 0;
 
         if (isFull) {
           return (
@@ -111,14 +119,18 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
               style={{ width: size, height: size }}
               fill="currentColor"
             />
-          )
+          );
         }
 
         if (isPartial) {
-          const pct = Math.round(frac * 100)
+          const pct = Math.round(frac * 100);
 
           return (
-            <span key={i} className="relative inline-block" style={{ width: size, height: size }}>
+            <span
+              key={i}
+              className="relative inline-block"
+              style={{ width: size, height: size }}
+            >
               {/* empty base */}
               <Star
                 className="text-muted-foreground/40"
@@ -127,7 +139,10 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
               />
 
               {/* filled overlay clipped */}
-              <span className="absolute inset-0 overflow-hidden" style={{ width: `${pct}%` }}>
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: `${pct}%` }}
+              >
                 <Star
                   className="text-[#F6C24A]"
                   style={{ width: size, height: size }}
@@ -135,7 +150,7 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
                 />
               </span>
             </span>
-          )
+          );
         }
 
         return (
@@ -145,10 +160,10 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
             style={{ width: size, height: size }}
             fill="none"
           />
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 function RatingBars() {
@@ -158,23 +173,29 @@ function RatingBars() {
     { label: "3 stars", pct: 0.18 },
     { label: "2 stars", pct: 0.08 },
     { label: "1 star", pct: 0.12 },
-  ]
+  ];
   return (
     <div className="space-y-2">
       {rows.map((r) => (
-        <div key={r.label} className="grid grid-cols-[64px_1fr] items-center gap-3">
+        <div
+          key={r.label}
+          className="grid grid-cols-[64px_1fr] items-center gap-3"
+        >
           <div className="text-xs text-muted-foreground">{r.label}</div>
           <div className="h-2 rounded-full bg-muted">
-            <div className="h-2 rounded-full bg-[#71C4FF]" style={{ width: `${Math.round(r.pct * 100)}%` }} />
+            <div
+              className="h-2 rounded-full bg-[#71C4FF]"
+              style={{ width: `${Math.round(r.pct * 100)}%` }}
+            />
           </div>
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function ImagePlaceholder({ className }: { className?: string }) {
-  return <div className={`h-full w-full bg-muted ${className ?? ""}`} />
+  return <div className={`h-full w-full bg-muted ${className ?? ""}`} />;
 }
 
 function RecommendedCard() {
@@ -198,9 +219,14 @@ function RecommendedCard() {
 
         <div className="space-y-2">
           <div className="flex items-baseline justify-between">
-            <div className="text-lg font-semibold leading-none">$1,342 per month</div>
+            <div className="text-lg font-semibold leading-none">
+              $1,342 per month
+            </div>
             <div className="flex items-center gap-1 text-sm font-medium">
-              <Star className="h-4 w-4 text-muted-foreground" fill="currentColor" />
+              <Star
+                className="h-4 w-4 text-muted-foreground"
+                fill="currentColor"
+              />
               <span>4.2</span>
               <span className="text-muted-foreground">(17)</span>
             </div>
@@ -208,39 +234,44 @@ function RecommendedCard() {
 
           <div className="space-y-0.5">
             <div className="text-sm">2 bd | 2 ba | 1,460 sq ft</div>
-            <div className="text-xs text-muted-foreground">10200 Westwood Blvd, Los Angeles, CA 90024</div>
+            <div className="text-xs text-muted-foreground">
+              10200 Westwood Blvd, Los Angeles, CA 90024
+            </div>
           </div>
         </div>
       </div>
     </Card>
-  )
+  );
 }
 
 /** Optional helper (you weren’t using showContact, but keeping hook since you had it) */
 function useShowAfterScrollPast() {
-  const ref = React.useRef<HTMLDivElement | null>(null)
-  const [show, setShow] = React.useState(false)
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const [show, setShow] = React.useState(false);
 
   React.useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const el = ref.current;
+    if (!el) return;
 
-    const obs = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting), { threshold: 0 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
+    const obs = new IntersectionObserver(
+      ([entry]) => setShow(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
-  return { ref, show }
+  return { ref, show };
 }
 
 export default function ListingPage({ params }: { params: { id: string } }) {
-  const { id } = params
-  const listing = { ...MOCK_LISTING, id }
+  const { id } = params;
+  const listing = { ...MOCK_LISTING, id };
 
   // If you want to use this later, keep it:
-  const { ref: galleryEndRef } = useShowAfterScrollPast()
+  const { ref: galleryEndRef } = useShowAfterScrollPast();
 
-  const onSeeMore = () => {}
+  const onSeeMore = () => {};
 
   return (
     <div className="min-h-dvh bg-background">
@@ -257,7 +288,10 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           {/* Right: 2x2 tiles */}
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="relative overflow-hidden rounded-2xl bg-muted">
+              <div
+                key={i}
+                className="relative overflow-hidden rounded-2xl bg-muted"
+              >
                 <div className="aspect-[16/9]">
                   <ImagePlaceholder />
                 </div>
@@ -289,20 +323,34 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                   <Stars value={listing.rating} size={32} />
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <div className="text-xl font-semibold">{listing.rating.toFixed(1)}</div>
-                  <div className="text-xl text-muted-foreground">({listing.reviewsCount})</div>
+                  <div className="text-xl font-semibold">
+                    {listing.rating.toFixed(1)}
+                  </div>
+                  <div className="text-xl text-muted-foreground">
+                    ({listing.reviewsCount})
+                  </div>
                 </div>
               </div>
 
               {/* Row 2: price + actions */}
               <div className="mt-3 flex items-center justify-between gap-4">
-                <div className="text-4xl font-semibold tracking-tight">{listing.priceLabel}</div>
+                <div className="text-4xl font-semibold tracking-tight">
+                  {listing.priceLabel}
+                </div>
 
                 <div className="flex items-center gap-5">
-                  <button type="button" aria-label="Save" className="text-[#71C4FF] hover:opacity-80 transition">
+                  <button
+                    type="button"
+                    aria-label="Save"
+                    className="text-[#71C4FF] hover:opacity-80 transition"
+                  >
                     <Heart className="h-9 w-9" />
                   </button>
-                  <button type="button" aria-label="Share" className="text-[#71C4FF] hover:opacity-80 transition">
+                  <button
+                    type="button"
+                    aria-label="Share"
+                    className="text-[#71C4FF] hover:opacity-80 transition"
+                  >
                     <Share2 className="h-9 w-9" />
                   </button>
                 </div>
@@ -319,31 +367,57 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                 </span>
                 <span className="text-muted-foreground">|</span>
                 <span>
-                  <span className="font-semibold">{listing.sqft.toLocaleString()}</span> sq ft
+                  <span className="font-semibold">
+                    {listing.sqft.toLocaleString()}
+                  </span>{" "}
+                  sq ft
                 </span>
               </div>
 
               {/* Row 4: address */}
-              <div className="mt-6 text-2xl text-muted-foreground">{listing.address}</div>
+              <div className="mt-6 text-2xl text-muted-foreground">
+                {listing.address}
+              </div>
             </div>
 
             {/* highlights (plain) */}
             <div className="mt-10">
               <div className="h-px w-full bg-border" />
 
-              <h2 className="mt-10 text-3xl font-semibold tracking-tight">Highlights</h2>
+              <h2 className="mt-10 text-3xl font-semibold tracking-tight">
+                Highlights
+              </h2>
 
               <div className="mt-10 grid gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-3">
-                <HighlightPlain icon={<Shield className="h-10 w-10" />} label="Security" />
-                <HighlightPlain icon={<Trees className="h-10 w-10" />} label="Hardwood flooring" />
-                <HighlightPlain icon={<Sparkles className="h-10 w-10" />} label="Curated art" />
-                <HighlightPlain icon={<Droplets className="h-10 w-10" />} label="In-unit washer & dryer" />
-                <HighlightPlain icon={<BoxIcon className="h-10 w-10" />} label="Internet" />
-                <HighlightPlain icon={<Wind className="h-10 w-10" />} label="AC" />
+                <HighlightPlain
+                  icon={<Shield className="h-10 w-10" />}
+                  label="Security"
+                />
+                <HighlightPlain
+                  icon={<Trees className="h-10 w-10" />}
+                  label="Hardwood flooring"
+                />
+                <HighlightPlain
+                  icon={<Sparkles className="h-10 w-10" />}
+                  label="Curated art"
+                />
+                <HighlightPlain
+                  icon={<Droplets className="h-10 w-10" />}
+                  label="In-unit washer & dryer"
+                />
+                <HighlightPlain
+                  icon={<BoxIcon className="h-10 w-10" />}
+                  label="Internet"
+                />
+                <HighlightPlain
+                  icon={<Wind className="h-10 w-10" />}
+                  label="AC"
+                />
               </div>
 
               <p className="mt-10 text-lg leading-8 text-muted-foreground">
-                Placeholder description text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
+                Placeholder description text. Lorem ipsum dolor sit amet,
+                consectetur adipiscing elit. Donec
               </p>
 
               <div className="mt-12 h-px w-full bg-border" />
@@ -383,7 +457,9 @@ export default function ListingPage({ params }: { params: { id: string } }) {
             {/* reviews */}
             <div className="mt-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Reviews ({MOCK_REVIEWS.length})</h2>
+                <h2 className="text-lg font-semibold">
+                  Reviews ({MOCK_REVIEWS.length})
+                </h2>
                 <div className="flex items-center gap-2">
                   <Button variant="secondary" className="rounded-full">
                     Add review
@@ -401,19 +477,29 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="font-semibold">{r.name}</div>
-                          <div className="text-xs text-muted-foreground">{r.dateLabel}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.dateLabel}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Stars value={r.rating} size={22} />
-                          <span className="ml-2 text-sm font-medium">{r.rating.toFixed(1)}</span>
+                          <span className="ml-2 text-sm font-medium">
+                            {r.rating.toFixed(1)}
+                          </span>
                         </div>
                       </div>
 
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{r.text}</p>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {r.text}
+                      </p>
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         {r.tags.map((t) => (
-                          <Badge key={t} variant="secondary" className="rounded-full">
+                          <Badge
+                            key={t}
+                            variant="secondary"
+                            className="rounded-full"
+                          >
                             {t}
                           </Badge>
                         ))}
@@ -424,17 +510,24 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
                 <Card className="h-fit rounded-2xl p-4">
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl font-semibold">{listing.rating.toFixed(1)}</div>
+                    <div className="text-3xl font-semibold">
+                      {listing.rating.toFixed(1)}
+                    </div>
                     <div>
                       <Stars value={listing.rating} />
-                      <div className="text-xs text-muted-foreground">{listing.reviewsCount} reviews</div>
+                      <div className="text-xs text-muted-foreground">
+                        {listing.reviewsCount} reviews
+                      </div>
                     </div>
                   </div>
                   <div className="mt-4">
                     <RatingBars />
                   </div>
                   <div className="mt-4">
-                    <Input placeholder="Search reviews…" className="rounded-full" />
+                    <Input
+                      placeholder="Search reviews…"
+                      className="rounded-full"
+                    />
                   </div>
                 </Card>
               </div>
@@ -448,10 +541,14 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                 <div className="text-sm font-semibold">Contact this lister</div>
 
                 <div className="mt-4 flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-semibold">JB</div>
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-semibold">
+                    JB
+                  </div>
                   <div>
                     <div className="text-sm font-semibold">Joe Bruin</div>
-                    <div className="text-xs text-muted-foreground">Verified</div>
+                    <div className="text-xs text-muted-foreground">
+                      Verified
+                    </div>
                   </div>
                 </div>
 
@@ -467,7 +564,9 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div className="mt-6 space-y-3">
-                  <Button className="w-full rounded-2xl bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">Message</Button>
+                  <Button className="w-full rounded-2xl bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
+                    Message
+                  </Button>
                   <Button variant="secondary" className="w-full rounded-2xl">
                     Request tour
                   </Button>
@@ -489,7 +588,11 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               variant="secondary"
               className="h-8 rounded-full bg-[#3EA6FC] px-5 text-white hover:bg-[#3EA6FC]/80"
             >
-              <Link href="/search" onClick={onSeeMore} className="inline-flex items-center gap-2">
+              <Link
+                href="/search"
+                onClick={onSeeMore}
+                className="inline-flex items-center gap-2"
+              >
                 <Search className="h-4 w-4" />
                 <span>See more</span>
               </Link>
@@ -504,15 +607,20 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         </div>
       </section>
     </div>
-  )
+  );
 }
 
-function HighlightPlain({ icon, label }: { icon: React.ReactNode; label: string }) {
+function HighlightPlain({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
   return (
     <div className="flex items-center gap-2">
       <div className="text-[#71C4FF]">{icon}</div>
       <div className="text-xl font-medium">{label}</div>
     </div>
-  )
+  );
 }
-

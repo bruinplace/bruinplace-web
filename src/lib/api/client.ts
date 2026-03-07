@@ -13,7 +13,7 @@ export type ApiBody = Record<string, unknown> | unknown[];
 
 async function request<T = unknown>(
   path: string,
-  init?: ApiRequestInit
+  init?: ApiRequestInit,
 ): Promise<T> {
   const root = getApiRoot();
   const url = path.startsWith("/") ? `${root}${path}` : `${root}/${path}`;
@@ -28,7 +28,8 @@ async function request<T = unknown>(
     throw new Error(`API ${res.status}: ${text || res.statusText}`);
   }
   const contentType = res.headers.get("content-type");
-  if (contentType?.includes("application/json")) return res.json() as Promise<T>;
+  if (contentType?.includes("application/json"))
+    return res.json() as Promise<T>;
   return res.text() as Promise<T>;
 }
 

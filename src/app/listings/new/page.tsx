@@ -31,7 +31,7 @@ function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
 function Button(
   props: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: "primary" | "ghost";
-  }
+  },
 ) {
   const variant = props.variant ?? "primary";
   return (
@@ -130,7 +130,9 @@ export default function NewListingPage() {
       >
         {/* Title */}
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-zinc-900">Add your lease</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">
+            Add your lease
+          </h1>
         </div>
 
         {/* Address */}
@@ -215,7 +217,9 @@ export default function NewListingPage() {
 
         {/* Parking */}
         <div className="mb-6">
-          <div className="mb-2 text-sm font-semibold text-zinc-900">Parking</div>
+          <div className="mb-2 text-sm font-semibold text-zinc-900">
+            Parking
+          </div>
 
           <div className="flex items-center justify-between py-2">
             <div className="text-xs text-zinc-700">Spots</div>

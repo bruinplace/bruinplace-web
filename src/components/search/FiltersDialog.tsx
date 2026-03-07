@@ -1,16 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Minus, Plus } from "lucide-react"
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Minus, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,27 +11,31 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
-export type Availability = "rental" | "sublease" | "sale"
-export type RoomType = "apartment" | "house" | "townhouse"
-export type CommuteMode = "walking" | "driving" | "scooter_bike" | "public_transport"
+export type Availability = "rental" | "sublease" | "sale";
+export type RoomType = "apartment" | "house" | "townhouse";
+export type CommuteMode =
+  | "walking"
+  | "driving"
+  | "scooter_bike"
+  | "public_transport";
 
 export type SearchFilters = {
-  ratingMin: number
-  availability: Availability
-  roomType: RoomType
+  ratingMin: number;
+  availability: Availability;
+  roomType: RoomType;
 
-  priceMin: number
-  priceMax: number
+  priceMin: number;
+  priceMax: number;
 
-  beds: number
-  baths: number
+  beds: number;
+  baths: number;
 
-  commuteMode: CommuteMode
-  commuteMin: number
-  commuteMax: number 
-}
+  commuteMode: CommuteMode;
+  commuteMin: number;
+  commuteMax: number;
+};
 
 const DEFAULT_FILTERS: SearchFilters = {
   ratingMin: 0,
@@ -54,14 +51,14 @@ const DEFAULT_FILTERS: SearchFilters = {
   commuteMode: "walking",
   commuteMin: 0,
   commuteMax: 60,
-}
+};
 
 function clamp(n: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, n))
+  return Math.min(max, Math.max(min, n));
 }
 
 function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ")
+  return classes.filter(Boolean).join(" ");
 }
 
 function formatCurrency(n: number) {
@@ -69,7 +66,7 @@ function formatCurrency(n: number) {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
-  }).format(n)
+  }).format(n);
 }
 
 function Pill({
@@ -77,9 +74,9 @@ function Pill({
   onClick,
   children,
 }: {
-  active?: boolean
-  onClick?: () => void
-  children: React.ReactNode
+  active?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <button
@@ -91,27 +88,27 @@ function Pill({
         "border-2",
         active
           ? "bg-[#71C4FF] text-white border-[#71C4FF]"
-          : "bg-white text-muted-foreground border-[#71C4FF] hover:bg-[#71C4FF]/10"
+          : "bg-white text-muted-foreground border-[#71C4FF] hover:bg-[#71C4FF]/10",
       )}
     >
       {children}
     </button>
-  )
+  );
 }
 
 function StarRow({
   value,
   onChange,
 }: {
-  value: number
-  onChange: (n: number) => void
+  value: number;
+  onChange: (n: number) => void;
 }) {
   return (
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-2">
         {Array.from({ length: 5 }).map((_, i) => {
-          const star = i + 1
-          const filled = star <= value
+          const star = i + 1;
+          const filled = star <= value;
           return (
             <button
               key={star}
@@ -133,7 +130,7 @@ function StarRow({
                 <polygon points="12 2 15 8.5 22 9.3 17 14 18.4 21 12 17.7 5.6 21 7 14 2 9.3 9 8.5 12 2" />
               </svg>
             </button>
-          )
+          );
         })}
       </div>
 
@@ -145,7 +142,7 @@ function StarRow({
         Clear
       </button>
     </div>
-  )
+  );
 }
 
 function Stepper({
@@ -154,10 +151,10 @@ function Stepper({
   min = 0,
   max = 10,
 }: {
-  value: number
-  onChange: (n: number) => void
-  min?: number
-  max?: number
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+  max?: number;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -183,7 +180,7 @@ function Stepper({
         <Plus className="h-5 w-5" />
       </button>
     </div>
-  )
+  );
 }
 
 function RangeSlider({
@@ -197,17 +194,17 @@ function RangeSlider({
   formatValue,
   onChange,
 }: {
-  label: string
-  min: number
-  max: number
-  absMin: number
-  absMax: number
-  step: number
-  unit?: string
-  formatValue?: (n: number) => string
-  onChange: (next: { min: number; max: number }) => void
+  label: string;
+  min: number;
+  max: number;
+  absMin: number;
+  absMax: number;
+  step: number;
+  unit?: string;
+  formatValue?: (n: number) => string;
+  onChange: (next: { min: number; max: number }) => void;
 }) {
-  const value: [number, number] = [min, max]
+  const value: [number, number] = [min, max];
 
   return (
     <div className="space-y-4">
@@ -221,7 +218,7 @@ function RangeSlider({
           step={step}
           minStepsBetweenThumbs={1}
           onValueChange={(v) => {
-            onChange({ min: v[0], max: v[1] })
+            onChange({ min: v[0], max: v[1] });
           }}
           className="
             py-4
@@ -240,8 +237,8 @@ function RangeSlider({
             {min === absMin
               ? `0 ${unit ?? ""}`.trim()
               : formatValue
-              ? formatValue(min)
-              : min}
+                ? formatValue(min)
+                : min}
           </div>
         </div>
 
@@ -251,13 +248,13 @@ function RangeSlider({
             {max === absMin
               ? `0 ${unit ?? ""}`.trim()
               : formatValue
-              ? formatValue(max)
-              : max}
+                ? formatValue(max)
+                : max}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function FiltersDialog({
@@ -265,23 +262,23 @@ export function FiltersDialog({
   onSave,
   initialFilters,
 }: {
-  trigger: React.ReactNode
-  onSave: (filters: SearchFilters) => void
-  initialFilters?: Partial<SearchFilters>
+  trigger: React.ReactNode;
+  onSave: (filters: SearchFilters) => void;
+  initialFilters?: Partial<SearchFilters>;
 }) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
   const [filters, setFilters] = React.useState<SearchFilters>({
     ...DEFAULT_FILTERS,
     ...(initialFilters ?? {}),
-  })
+  });
 
   // When dialog opens, re-seed from initial (optional) so it feels consistent
   React.useEffect(() => {
-    if (!open) return
-    setFilters({ ...DEFAULT_FILTERS, ...(initialFilters ?? {}) })
+    if (!open) return;
+    setFilters({ ...DEFAULT_FILTERS, ...(initialFilters ?? {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -292,12 +289,14 @@ export function FiltersDialog({
           "w-[92vw] max-w-[640px]",
           "max-h-[82dvh] overflow-y-auto",
           "rounded-3xl p-0",
-          "gap-0"
+          "gap-0",
         )}
       >
         <div className="p-8 pb-32">
           <DialogHeader className="mb-6">
-            <DialogTitle className="text-2xl font-semibold">Filters</DialogTitle>
+            <DialogTitle className="text-2xl font-semibold">
+              Filters
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-10">
@@ -306,7 +305,9 @@ export function FiltersDialog({
               <h3 className="text-xl font-semibold">Rating</h3>
               <StarRow
                 value={filters.ratingMin}
-                onChange={(ratingMin) => setFilters((p) => ({ ...p, ratingMin }))}
+                onChange={(ratingMin) =>
+                  setFilters((p) => ({ ...p, ratingMin }))
+                }
               />
             </section>
 
@@ -316,19 +317,25 @@ export function FiltersDialog({
               <div className="flex flex-wrap gap-4">
                 <Pill
                   active={filters.availability === "rental"}
-                  onClick={() => setFilters((p) => ({ ...p, availability: "rental" }))}
+                  onClick={() =>
+                    setFilters((p) => ({ ...p, availability: "rental" }))
+                  }
                 >
                   Rental
                 </Pill>
                 <Pill
                   active={filters.availability === "sublease"}
-                  onClick={() => setFilters((p) => ({ ...p, availability: "sublease" }))}
+                  onClick={() =>
+                    setFilters((p) => ({ ...p, availability: "sublease" }))
+                  }
                 >
                   Sublease
                 </Pill>
                 <Pill
                   active={filters.availability === "sale"}
-                  onClick={() => setFilters((p) => ({ ...p, availability: "sale" }))}
+                  onClick={() =>
+                    setFilters((p) => ({ ...p, availability: "sale" }))
+                  }
                 >
                   For sale
                 </Pill>
@@ -341,19 +348,25 @@ export function FiltersDialog({
               <div className="flex flex-wrap gap-4">
                 <Pill
                   active={filters.roomType === "apartment"}
-                  onClick={() => setFilters((p) => ({ ...p, roomType: "apartment" }))}
+                  onClick={() =>
+                    setFilters((p) => ({ ...p, roomType: "apartment" }))
+                  }
                 >
                   Apartment
                 </Pill>
                 <Pill
                   active={filters.roomType === "house"}
-                  onClick={() => setFilters((p) => ({ ...p, roomType: "house" }))}
+                  onClick={() =>
+                    setFilters((p) => ({ ...p, roomType: "house" }))
+                  }
                 >
                   House
                 </Pill>
                 <Pill
                   active={filters.roomType === "townhouse"}
-                  onClick={() => setFilters((p) => ({ ...p, roomType: "townhouse" }))}
+                  onClick={() =>
+                    setFilters((p) => ({ ...p, roomType: "townhouse" }))
+                  }
                 >
                   Townhouse
                 </Pill>
@@ -441,8 +454,8 @@ export function FiltersDialog({
           <Button
             className="h-12 w-full rounded-2xl text-base font-semibold bg-[#71C4FF] hover:bg-[#71C4FF]/60"
             onClick={() => {
-              onSave(filters)
-              setOpen(false)
+              onSave(filters);
+              setOpen(false);
             }}
           >
             SAVE
@@ -450,5 +463,5 @@ export function FiltersDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,9 +1,9 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Search } from "lucide-react"
-import { ListingRow } from "@/components/listings/ListingRow"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Search } from "lucide-react";
+import { ListingRow } from "@/components/listings/ListingRow";
 
 export default function Home() {
   const listings = Array.from({ length: 10 }).map((_, i) => ({
@@ -17,7 +17,7 @@ export default function Home() {
     rating: 4.7,
     reviewsCount: 17,
     images: [],
-  }))
+  }));
 
   return (
     <div className="min-h-dvh bg-background">
@@ -74,5 +74,5 @@ export default function Home() {
         <ListingRow title="Recommended Listings" listings={listings} />
       </main>
     </div>
-  )
+  );
 }

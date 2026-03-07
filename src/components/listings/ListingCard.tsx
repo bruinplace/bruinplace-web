@@ -1,48 +1,48 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { AspectRatio } from "@/components/ui/aspect-ratio"
-import { ChevronLeft, ChevronRight, Heart, Star } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { ChevronLeft, ChevronRight, Heart, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type UnitListing = {
-  id: string
-  priceLabel: string
-  beds: number
-  baths: number
-  sqft: number
-  address: string
-  rating: number
-  reviewsCount: number
-  images?: string[]
-}
+  id: string;
+  priceLabel: string;
+  beds: number;
+  baths: number;
+  sqft: number;
+  address: string;
+  rating: number;
+  reviewsCount: number;
+  images?: string[];
+};
 
 export function ListingCard({
   listing,
   className,
 }: {
-  listing: UnitListing
-  className?: string
+  listing: UnitListing;
+  className?: string;
 }) {
-  const images = listing.images?.length ? listing.images : []
-  const [active, setActive] = React.useState(0)
+  const images = listing.images?.length ? listing.images : [];
+  const [active, setActive] = React.useState(0);
 
   function prev() {
-    if (!images.length) return
-    setActive((i) => (i - 1 + images.length) % images.length)
+    if (!images.length) return;
+    setActive((i) => (i - 1 + images.length) % images.length);
   }
   function next() {
-    if (!images.length) return
-    setActive((i) => (i + 1) % images.length)
+    if (!images.length) return;
+    setActive((i) => (i + 1) % images.length);
   }
 
   function stopLink(e: React.SyntheticEvent) {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   return (
@@ -50,7 +50,7 @@ export function ListingCard({
       <Card
         className={cn(
           "w-full rounded-2xl p-3 shadow-lg transition hover:shadow-xl",
-          className
+          className,
         )}
       >
         <div className="space-y-3">
@@ -75,7 +75,7 @@ export function ListingCard({
               variant="ghost"
               size="icon"
               onClick={(e) => {
-                stopLink(e)
+                stopLink(e);
               }}
               className="absolute right-3 top-3 h-9 w-9 rounded-full bg-background/70 backdrop-blur hover:bg-background/80"
               aria-label="Save listing"
@@ -89,12 +89,12 @@ export function ListingCard({
               variant="ghost"
               size="icon"
               onClick={(e) => {
-                stopLink(e)
-                prev()
+                stopLink(e);
+                prev();
               }}
               className={cn(
                 "absolute left-2 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur hover:bg-background/80",
-                !images.length && "pointer-events-none opacity-0"
+                !images.length && "pointer-events-none opacity-0",
               )}
               aria-label="Previous image"
             >
@@ -106,12 +106,12 @@ export function ListingCard({
               variant="ghost"
               size="icon"
               onClick={(e) => {
-                stopLink(e)
-                next()
+                stopLink(e);
+                next();
               }}
               className={cn(
                 "absolute right-2 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur hover:bg-background/80",
-                !images.length && "pointer-events-none opacity-0"
+                !images.length && "pointer-events-none opacity-0",
               )}
               aria-label="Next image"
             >
@@ -126,7 +126,7 @@ export function ListingCard({
                     key={i}
                     className={cn(
                       "h-1.5 w-1.5 rounded-full",
-                      i === active ? "bg-foreground/80" : "bg-foreground/30"
+                      i === active ? "bg-foreground/80" : "bg-foreground/30",
                     )}
                   />
                 ))}
@@ -155,11 +155,13 @@ export function ListingCard({
                 {listing.beds} bd &nbsp;|&nbsp; {listing.baths} ba &nbsp;|&nbsp;{" "}
                 {listing.sqft.toLocaleString()} sq ft
               </div>
-              <div className="text-xs text-muted-foreground">{listing.address}</div>
+              <div className="text-xs text-muted-foreground">
+                {listing.address}
+              </div>
             </div>
           </div>
         </div>
       </Card>
     </Link>
-  )
+  );
 }

@@ -1,19 +1,21 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
-import { BuildingCard } from "@/components/listings/BuildingCard"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import {
+  BuildingCard,
+  type Building,
+} from "@/components/listings/BuildingCard";
 
 type ListingRowProps = {
-  title: string
-  listings: any[]
-  onSeeMore?: () => void
-}
+  title: string;
+  listings: Building[];
+  onSeeMore?: () => void;
+};
 
 export function ListingRow({ title, listings, onSeeMore }: ListingRowProps) {
-  const visible = listings.slice(0, 4)
+  const visible = listings.slice(0, 4);
 
   return (
     <section className="space-y-4">
@@ -44,5 +46,5 @@ export function ListingRow({ title, listings, onSeeMore }: ListingRowProps) {
         ))}
       </div>
     </section>
-  )
+  );
 }
