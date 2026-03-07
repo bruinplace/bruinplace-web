@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { User, Plus, UserCog, ExternalLink } from "lucide-react"
+import Link from "next/link";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { User, Plus, UserCog, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 // UCLA SSO LOGIN HANDLER
-const UCLA_SSO_URL = "/api/auth/sign-in"
+const UCLA_SSO_URL = "/api/auth/sign-in";
 
 export default function Header() {
-  const [signInOpen, setSignInOpen] = useState(false)
+  const [signInOpen, setSignInOpen] = useState(false);
 
   return (
     <>
@@ -103,8 +103,8 @@ export default function Header() {
             <Button
               className="h-[42px] w-[260px] rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF] flex items-center gap-2"
               onClick={() => {
-                setSignInOpen(false)
-                window.location.href = UCLA_SSO_URL
+                setSignInOpen(false);
+                window.location.href = UCLA_SSO_URL;
               }}
             >
               <ExternalLink className="h-4 w-4" />
@@ -119,5 +119,5 @@ export default function Header() {
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

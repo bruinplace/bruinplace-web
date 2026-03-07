@@ -1,49 +1,49 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useEffect, useMemo, useRef, useState } from "react"
-import { X } from "lucide-react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 type ModalProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 
-  title?: React.ReactNode
-  headerLeft?: React.ReactNode
-  headerCenter?: React.ReactNode
-  headerRight?: React.ReactNode
+  title?: React.ReactNode;
+  headerLeft?: React.ReactNode;
+  headerCenter?: React.ReactNode;
+  headerRight?: React.ReactNode;
 
-  children: React.ReactNode
+  children: React.ReactNode;
 
   /** Optional sticky footer (buttons, etc.) */
-  footer?: React.ReactNode
+  footer?: React.ReactNode;
 
   /** Sizes */
-  maxWidthClassName?: string // e.g. "sm:max-w-[980px]"
-  heightClassName?: string // e.g. "h-[82vh]"
+  maxWidthClassName?: string; // e.g. "sm:max-w-[980px]"
+  heightClassName?: string; // e.g. "h-[82vh]"
 
   /** Padding inside scrollable content */
-  contentClassName?: string
+  contentClassName?: string;
 
   /** Show the top/bottom “fade shading” */
-  fades?: boolean
+  fades?: boolean;
 
   /** If your header/footer heights differ, tune these */
-  fadeTopOffsetPx?: number
-  fadeBottomOffsetPx?: number
-  fadeTopHeightPx?: number
-  fadeBottomHeightPx?: number
+  fadeTopOffsetPx?: number;
+  fadeBottomOffsetPx?: number;
+  fadeTopHeightPx?: number;
+  fadeBottomHeightPx?: number;
 
   /** If you want header shadow only after scrolling */
-  headerShadowOnScroll?: boolean
+  headerShadowOnScroll?: boolean;
 
   /** Default close button */
-  showClose?: boolean
-  onClose?: () => void
-}
+  showClose?: boolean;
+  onClose?: () => void;
+};
 
 export function Modal({
   open,
@@ -72,65 +72,67 @@ export function Modal({
   showClose = true,
   onClose,
 }: ModalProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [scrolled, setScrolled] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const el = scrollRef.current
-    if (!el || !headerShadowOnScroll) return
+    const el = scrollRef.current;
+    if (!el || !headerShadowOnScroll) return;
 
-    const handleScroll = () => setScrolled(el.scrollTop > 0)
-    handleScroll()
-    el.addEventListener("scroll", handleScroll)
-    return () => el.removeEventListener("scroll", handleScroll)
-  }, [headerShadowOnScroll])
+    const handleScroll = () => setScrolled(el.scrollTop > 0);
+    handleScroll();
+    el.addEventListener("scroll", handleScroll);
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [headerShadowOnScroll]);
 
   const close = () => {
-    onClose?.()
-    onOpenChange(false)
-  }
+    onClose?.();
+    onOpenChange(false);
+  };
 
   const fadeTopStyle = useMemo(
     () => ({
       top: `${fadeTopOffsetPx}px`,
       height: `${fadeTopHeightPx}px`,
     }),
-    [fadeTopOffsetPx, fadeTopHeightPx]
-  )
+    [fadeTopOffsetPx, fadeTopHeightPx],
+  );
 
   const fadeBottomStyle = useMemo(
     () => ({
       bottom: `${fadeBottomOffsetPx}px`,
       height: `${fadeBottomHeightPx}px`,
     }),
-    [fadeBottomOffsetPx, fadeBottomHeightPx]
-  )
+    [fadeBottomOffsetPx, fadeBottomHeightPx],
+  );
 
-  const a11yTitle = typeof title === "string" ? title : "Dialog"
+  const a11yTitle = typeof title === "string" ? title : "Dialog";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-     <DialogContent
-  showCloseButton={false}
-  className={cn(
-    "!grid !gap-0 !p-0 !border-0",
-    "!fixed !left-1/2 !top-1/2 !z-50",
-    "!-translate-x-1/2 !-translate-y-1/2",
+      <DialogContent
+        showCloseButton={false}
+        className={cn(
+          "!grid !gap-0 !p-0 !border-0",
+          "!fixed !left-1/2 !top-1/2 !z-50",
+          "!-translate-x-1/2 !-translate-y-1/2",
 
-    // ✅ width rules (less wide)
-    "w-[95vw] sm:w-full",
-    "max-h-[calc(100vh-32px)]",
+          // ✅ width rules (less wide)
+          "w-[95vw] sm:w-full",
+          "max-h-[calc(100vh-32px)]",
 
-    "!flex !flex-col !overflow-hidden",
-    "rounded-[28px]",
-    "shadow-[0_20px_60px_rgba(0,0,0,0.18)]",
+          "!flex !flex-col !overflow-hidden",
+          "rounded-[28px]",
+          "shadow-[0_20px_60px_rgba(0,0,0,0.18)]",
 
-    maxWidthClassName,
-    heightClassName
-  )}
->
+          maxWidthClassName,
+          heightClassName,
+        )}
+      >
         {/* Accessibility title (required by Radix) */}
-        {title ? null : <DialogTitle className="sr-only">{a11yTitle}</DialogTitle>}
+        {title ? null : (
+          <DialogTitle className="sr-only">{a11yTitle}</DialogTitle>
+        )}
 
         {/* ===== Header ===== */}
         <div
@@ -138,7 +140,7 @@ export function Modal({
             "sticky top-0 z-20 bg-background",
             headerShadowOnScroll && scrolled
               ? "shadow-[0_10px_22px_rgba(0,0,0,0.10)]"
-              : ""
+              : "",
           )}
         >
           <div className="px-10 sm:px-14 py-5 flex items-center gap-4">
@@ -208,5 +210,5 @@ export function Modal({
         ) : null}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

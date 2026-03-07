@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { UserCog } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UserCog } from "lucide-react";
 
 export default function SignUpPage() {
   return (
@@ -85,5 +85,5 @@ export default function SignUpPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }

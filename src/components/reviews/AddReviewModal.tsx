@@ -1,51 +1,55 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Modal } from "@/components/ui/modal"
-import { Camera, Check, Plus } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Modal } from "@/components/ui/modal";
+import { Camera, Check, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type RatingKey = "management" | "cleanliness" | "noiseLevel" | "leaseFlexibility"
+type RatingKey =
+  | "management"
+  | "cleanliness"
+  | "noiseLevel"
+  | "leaseFlexibility";
 
 export type ReviewDraft = {
-  leaseStart?: string // "YYYY-MM"
-  leaseEnd?: string // "YYYY-MM"
-  reviewText: string
-  ratings: Record<RatingKey, number> // 1..5
-  photos: File[]
-}
+  leaseStart?: string; // "YYYY-MM"
+  leaseEnd?: string; // "YYYY-MM"
+  reviewText: string;
+  ratings: Record<RatingKey, number>; // 1..5
+  photos: File[];
+};
 
 type ReviewModalProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title?: string
-  initialValue?: Partial<ReviewDraft>
-  onSubmit: (draft: ReviewDraft) => void | Promise<void>
-  submitting?: boolean
-  maxPhotos?: number
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title?: string;
+  initialValue?: Partial<ReviewDraft>;
+  onSubmit: (draft: ReviewDraft) => void | Promise<void>;
+  submitting?: boolean;
+  maxPhotos?: number;
+};
 
 const DEFAULT_RATINGS: Record<RatingKey, number> = {
   management: 0,
   cleanliness: 0,
   noiseLevel: 0,
   leaseFlexibility: 0,
-}
+};
 
 const RATING_LABELS: Record<RatingKey, string> = {
   management: "Management",
   cleanliness: "Cleanliness",
   noiseLevel: "Noise Level",
   leaseFlexibility: "Lease Flexibility",
-}
+};
 
 function clampRating(n: number) {
-  if (Number.isNaN(n)) return 0
-  return Math.max(0, Math.min(5, Math.round(n)))
+  if (Number.isNaN(n)) return 0;
+  return Math.max(0, Math.min(5, Math.round(n)));
 }
 
 function Star({
@@ -69,7 +73,7 @@ function Star({
         d="M11.48 3.499a.75.75 0 0 1 1.04 0c.18.18.26.43.22.67l-.7 4.05a.75.75 0 0 0 .22.66l2.94 2.86a.75.75 0 0 1-.42 1.28l-4.06.59a.75.75 0 0 0-.56.41l-1.82 3.68a.75.75 0 0 1-1.35 0l-1.82-3.68a.75.75 0 0 0-.56-.41l-4.06-.59a.75.75 0 0 1-.42-1.28l2.94-2.86a.75.75 0 0 0 .22-.66l-.7-4.05a.75.75 0 0 1 1.26-.67l2.9 3.05a.75.75 0 0 0 1.08 0l2.9-3.05Z"
       />
     </svg>
-  )
+  );
 }
 
 function StarRating({
@@ -77,12 +81,12 @@ function StarRating({
   value,
   onChange,
 }: {
-  label: string
-  value: number
-  onChange: (next: number) => void
+  label: string;
+  value: number;
+  onChange: (next: number) => void;
 }) {
-  const [hover, setHover] = React.useState<number | null>(null)
-  const shown = hover ?? value
+  const [hover, setHover] = React.useState<number | null>(null);
+  const shown = hover ?? value;
 
   return (
     <div className="flex items-center justify-between gap-6">
@@ -90,8 +94,8 @@ function StarRating({
 
       <div className="flex items-center gap-3">
         {Array.from({ length: 5 }).map((_, i) => {
-          const n = i + 1
-          const filled = n <= shown
+          const n = i + 1;
+          const filled = n <= shown;
           return (
             <button
               key={n}
@@ -108,18 +112,24 @@ function StarRating({
                 filled={filled}
                 className={cn(
                   "h-7 w-7 transition",
-                  filled ? "text-amber-400" : "text-amber-300/70"
+                  filled ? "text-amber-400" : "text-amber-300/70",
                 )}
               />
             </button>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+function SectionHeader({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
   return (
     <div className="flex items-center gap-4">
       <div className="h-10 w-10 rounded-xl bg-sky-50 grid place-items-center text-sky-600">
@@ -127,7 +137,7 @@ function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }
       </div>
       <div className="text-2xl font-semibold tracking-tight">{title}</div>
     </div>
-  )
+  );
 }
 
 function PhotosPicker({
@@ -135,21 +145,21 @@ function PhotosPicker({
   onChange,
   maxPhotos,
 }: {
-  files: File[]
-  onChange: (files: File[]) => void
-  maxPhotos: number
+  files: File[];
+  onChange: (files: File[]) => void;
+  maxPhotos: number;
 }) {
-  const inputRef = React.useRef<HTMLInputElement | null>(null)
-  const remaining = Math.max(0, maxPhotos - files.length)
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const remaining = Math.max(0, maxPhotos - files.length);
 
   const handlePick = (picked: FileList | null) => {
-    if (!picked || picked.length === 0) return
-    const incoming = Array.from(picked)
-    const merged = [...files, ...incoming].slice(0, maxPhotos)
-    onChange(merged)
-  }
+    if (!picked || picked.length === 0) return;
+    const incoming = Array.from(picked);
+    const merged = [...files, ...incoming].slice(0, maxPhotos);
+    onChange(merged);
+  };
 
-  const removeAt = (idx: number) => onChange(files.filter((_, i) => i !== idx))
+  const removeAt = (idx: number) => onChange(files.filter((_, i) => i !== idx));
 
   return (
     <div className="space-y-6">
@@ -194,7 +204,7 @@ function PhotosPicker({
           "h-[260px] sm:h-[290px]",
           "grid place-items-center text-center",
           "hover:bg-muted/20 transition",
-          "disabled:opacity-40 disabled:hover:bg-muted/10"
+          "disabled:opacity-40 disabled:hover:bg-muted/10",
         )}
         onClick={() => inputRef.current?.click()}
         disabled={remaining === 0}
@@ -221,7 +231,12 @@ function PhotosPicker({
                   {(f.size / 1024 / 1024).toFixed(2)} MB
                 </div>
               </div>
-              <Button type="button" variant="ghost" className="rounded-xl" onClick={() => removeAt(idx)}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="rounded-xl"
+                onClick={() => removeAt(idx)}
+              >
                 Remove
               </Button>
             </div>
@@ -229,7 +244,7 @@ function PhotosPicker({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export function ReviewModal({
@@ -241,33 +256,40 @@ export function ReviewModal({
   submitting = false,
   maxPhotos = 5,
 }: ReviewModalProps) {
-  const [leaseStart, setLeaseStart] = React.useState(initialValue?.leaseStart ?? "")
-  const [leaseEnd, setLeaseEnd] = React.useState(initialValue?.leaseEnd ?? "")
-  const [reviewText, setReviewText] = React.useState(initialValue?.reviewText ?? "")
-  const [photos, setPhotos] = React.useState<File[]>(initialValue?.photos ?? [])
+  const [leaseStart, setLeaseStart] = React.useState(
+    initialValue?.leaseStart ?? "",
+  );
+  const [leaseEnd, setLeaseEnd] = React.useState(initialValue?.leaseEnd ?? "");
+  const [reviewText, setReviewText] = React.useState(
+    initialValue?.reviewText ?? "",
+  );
+  const [photos, setPhotos] = React.useState<File[]>(
+    initialValue?.photos ?? [],
+  );
   const [ratings, setRatings] = React.useState<Record<RatingKey, number>>({
     ...DEFAULT_RATINGS,
     ...(initialValue?.ratings ?? {}),
-  })
+  });
 
   React.useEffect(() => {
-    if (!open) return
-    setLeaseStart(initialValue?.leaseStart ?? "")
-    setLeaseEnd(initialValue?.leaseEnd ?? "")
-    setReviewText(initialValue?.reviewText ?? "")
-    setPhotos(initialValue?.photos ?? [])
-    setRatings({ ...DEFAULT_RATINGS, ...(initialValue?.ratings ?? {}) })
+    if (!open) return;
+    setLeaseStart(initialValue?.leaseStart ?? "");
+    setLeaseEnd(initialValue?.leaseEnd ?? "");
+    setReviewText(initialValue?.reviewText ?? "");
+    setPhotos(initialValue?.photos ?? []);
+    setRatings({ ...DEFAULT_RATINGS, ...(initialValue?.ratings ?? {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open]);
 
   const setRating = (key: RatingKey, next: number) => {
-    setRatings((prev) => ({ ...prev, [key]: clampRating(next) }))
-  }
+    setRatings((prev) => ({ ...prev, [key]: clampRating(next) }));
+  };
 
-  const canSubmit = reviewText.trim().length > 0 && Object.values(ratings).some((v) => v > 0)
+  const canSubmit =
+    reviewText.trim().length > 0 && Object.values(ratings).some((v) => v > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     const payload: ReviewDraft = {
       leaseStart: leaseStart || undefined,
       leaseEnd: leaseEnd || undefined,
@@ -279,10 +301,10 @@ export function ReviewModal({
         leaseFlexibility: clampRating(ratings.leaseFlexibility),
       },
       photos,
-    }
-    await onSubmit(payload)
-    onOpenChange(false)
-  }
+    };
+    await onSubmit(payload);
+    onOpenChange(false);
+  };
 
   return (
     <Modal
@@ -312,7 +334,7 @@ export function ReviewModal({
               className={cn(
                 "h-14 px-10 rounded-full text-lg font-semibold",
                 "bg-sky-400 hover:bg-sky-500 text-white",
-                "shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+                "shadow-[0_12px_30px_rgba(0,0,0,0.18)]",
               )}
             >
               {submitting ? "Submitting..." : "Submit review"}
@@ -333,8 +355,16 @@ export function ReviewModal({
         </div>
       }
     >
-      <form id="review-modal-form" onSubmit={handleSubmit} className="space-y-10">
-        <PhotosPicker files={photos} onChange={setPhotos} maxPhotos={maxPhotos} />
+      <form
+        id="review-modal-form"
+        onSubmit={handleSubmit}
+        className="space-y-10"
+      >
+        <PhotosPicker
+          files={photos}
+          onChange={setPhotos}
+          maxPhotos={maxPhotos}
+        />
 
         <div className="border-t pt-10 space-y-6">
           <SectionHeader icon={<Check className="h-6 w-6" />} title="Ratings" />
@@ -351,7 +381,10 @@ export function ReviewModal({
         </div>
 
         <div className="border-t pt-10 space-y-6">
-          <SectionHeader icon={<Check className="h-6 w-6" />} title="Lease Length" />
+          <SectionHeader
+            icon={<Check className="h-6 w-6" />}
+            title="Lease Length"
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
             <div className="space-y-2">
@@ -402,5 +435,5 @@ export function ReviewModal({
         <div className="h-2" />
       </form>
     </Modal>
-  )
+  );
 }

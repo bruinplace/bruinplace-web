@@ -31,7 +31,7 @@ function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
 function Button(
   props: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: "primary" | "ghost";
-  }
+  },
 ) {
   const variant = props.variant ?? "primary";
   return (
@@ -131,7 +131,9 @@ export default function NewBuildingPage() {
       >
         {/* Title */}
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-zinc-900">Add a building</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">
+            Add a building
+          </h1>
         </div>
 
         {/* Building name */}
@@ -197,16 +199,28 @@ export default function NewBuildingPage() {
 
         {/* Counts */}
         <div className="mb-6">
-          <div className="mb-2 text-sm font-semibold text-zinc-900">Building details</div>
+          <div className="mb-2 text-sm font-semibold text-zinc-900">
+            Building details
+          </div>
 
           <div className="flex items-center justify-between py-2">
             <div className="text-xs text-zinc-700">Total units</div>
-            <Stepper value={unitsCount} onChange={setUnitsCount} min={0} max={999} />
+            <Stepper
+              value={unitsCount}
+              onChange={setUnitsCount}
+              min={0}
+              max={999}
+            />
           </div>
 
           <div className="flex items-center justify-between py-2">
             <div className="text-xs text-zinc-700">Parking spots</div>
-            <Stepper value={parkingSpots} onChange={setParkingSpots} min={0} max={999} />
+            <Stepper
+              value={parkingSpots}
+              onChange={setParkingSpots}
+              min={0}
+              max={999}
+            />
           </div>
         </div>
 

@@ -1,34 +1,34 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, X, Heart, Share2 } from "lucide-react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
-import { Modal } from "@/components/ui/modal"
+import * as React from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, X, Heart, Share2 } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { Modal } from "@/components/ui/modal";
 
 // =====================
 // Types
 // =====================
 export type GalleryImage = {
-  src: string
-  alt?: string
-}
+  src: string;
+  alt?: string;
+};
 
 // =====================
 // GalleryPopup (Modal Wrapper)
 // =====================
 type GalleryPopupProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  images: GalleryImage[]
-  initialIndex?: number
-  onIndexChange?: (index: number) => void
-  priceText: string
-  metaText: string
-  addressText: string
-  className?: string
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  images: GalleryImage[];
+  initialIndex?: number;
+  onIndexChange?: (index: number) => void;
+  priceText: string;
+  metaText: string;
+  addressText: string;
+  className?: string;
+};
 
 export function GalleryPopup({
   open,
@@ -41,16 +41,17 @@ export function GalleryPopup({
   addressText,
   className,
 }: GalleryPopupProps) {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   useEffect(() => {
-    if (!open) return
-    setCurrentIndex(initialIndex)
-  }, [open, initialIndex])
+    if (!open) return;
+    // eslint-disable-next-line -- Error: Calling setState synchronously within an effect can trigger cascading renders
+    setCurrentIndex(initialIndex);
+  }, [open, initialIndex]);
 
   useEffect(() => {
-    onIndexChange?.(currentIndex)
-  }, [currentIndex, onIndexChange])
+    onIndexChange?.(currentIndex);
+  }, [currentIndex, onIndexChange]);
 
   return (
     <Modal
@@ -104,15 +105,15 @@ export function GalleryPopup({
         onOpenIndex={(idx) => setCurrentIndex(idx)}
       />
     </Modal>
-  )
+  );
 }
 
 function ActionIconButton({
   children,
   ariaLabel,
 }: {
-  children: React.ReactNode
-  ariaLabel: string
+  children: React.ReactNode;
+  ariaLabel: string;
 }) {
   return (
     <button
@@ -122,23 +123,28 @@ function ActionIconButton({
     >
       {children}
     </button>
-  )
+  );
 }
 
 function renderMetaLikeScreenshot(metaText: string) {
-  const parts = metaText.split("|").map((p) => p.trim()).filter(Boolean)
+  const parts = metaText
+    .split("|")
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   return (
     <div className="flex items-center gap-4 flex-wrap">
       {parts.map((part, idx) => {
-        const m = part.match(/^([\d,\.]+)\s+(.*)$/)
-        const num = m?.[1]
-        const rest = m?.[2] ?? part
+        const m = part.match(/^([\d,\.]+)\s+(.*)$/);
+        const num = m?.[1];
+        const rest = m?.[2] ?? part;
 
         return (
           <React.Fragment key={part + idx}>
             <span className="flex items-baseline gap-2">
-              {num ? <span className="font-semibold text-foreground">{num}</span> : null}
+              {num ? (
+                <span className="font-semibold text-foreground">{num}</span>
+              ) : null}
               <span>{rest}</span>
             </span>
 
@@ -146,23 +152,23 @@ function renderMetaLikeScreenshot(metaText: string) {
               <span className="h-5 w-px bg-muted-foreground/25" />
             )}
           </React.Fragment>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 // =====================
 // ListingGallery (Grid + Lightbox)
 // =====================
 type ListingGalleryProps = {
-  images: GalleryImage[]
-  tileRadiusClassName?: string
-  gapClassName?: string
-  heroRow?: boolean
-  className?: string
-  onOpenIndex?: (index: number) => void
-}
+  images: GalleryImage[];
+  tileRadiusClassName?: string;
+  gapClassName?: string;
+  heroRow?: boolean;
+  className?: string;
+  onOpenIndex?: (index: number) => void;
+};
 
 export function ListingGallery({
   images,
@@ -172,45 +178,45 @@ export function ListingGallery({
   className,
   onOpenIndex,
 }: ListingGalleryProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const safeImages = useMemo(() => images?.filter(Boolean) ?? [], [images])
+  const safeImages = useMemo(() => images?.filter(Boolean) ?? [], [images]);
 
   const openAt = useCallback(
     (idx: number) => {
-      setActiveIndex(idx)
-      onOpenIndex?.(idx)
-      setLightboxOpen(true)
+      setActiveIndex(idx);
+      onOpenIndex?.(idx);
+      setLightboxOpen(true);
     },
-    [onOpenIndex]
-  )
+    [onOpenIndex],
+  );
 
-  const close = useCallback(() => setLightboxOpen(false), [])
+  const close = useCallback(() => setLightboxOpen(false), []);
 
   const prev = useCallback(() => {
-    setActiveIndex((i) => (i - 1 + safeImages.length) % safeImages.length)
-  }, [safeImages.length])
+    setActiveIndex((i) => (i - 1 + safeImages.length) % safeImages.length);
+  }, [safeImages.length]);
 
   const next = useCallback(() => {
-    setActiveIndex((i) => (i + 1) % safeImages.length)
-  }, [safeImages.length])
+    setActiveIndex((i) => (i + 1) % safeImages.length);
+  }, [safeImages.length]);
 
   useEffect(() => {
-    if (!lightboxOpen) return
+    if (!lightboxOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close()
-      if (e.key === "ArrowLeft") prev()
-      if (e.key === "ArrowRight") next()
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [lightboxOpen, close, prev, next])
+      if (e.key === "Escape") close();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [lightboxOpen, close, prev, next]);
 
-  if (!safeImages.length) return null
+  if (!safeImages.length) return null;
 
-  const hero = heroRow ? safeImages.slice(0, 2) : []
-  const rest = heroRow ? safeImages.slice(2) : safeImages
+  const hero = heroRow ? safeImages.slice(0, 2) : [];
+  const rest = heroRow ? safeImages.slice(2) : safeImages;
 
   return (
     <>
@@ -230,9 +236,11 @@ export function ListingGallery({
         )}
 
         {rest.length > 0 && (
-          <div className={cn("mt-6 grid grid-cols-1 md:grid-cols-2", gapClassName)}>
+          <div
+            className={cn("mt-6 grid grid-cols-1 md:grid-cols-2", gapClassName)}
+          >
             {rest.map((img, idx) => {
-              const realIndex = heroRow ? idx + 2 : idx
+              const realIndex = heroRow ? idx + 2 : idx;
               return (
                 <GalleryTile
                   key={img.src + idx}
@@ -241,7 +249,7 @@ export function ListingGallery({
                   aspectClassName="aspect-[16/10]"
                   onClick={() => openAt(realIndex)}
                 />
-              )
+              );
             })}
           </div>
         )}
@@ -254,7 +262,7 @@ export function ListingGallery({
             "!border-0 !p-0 !gap-0 !grid",
             "!w-[calc(100vw-24px)] !max-w-[1100px]",
             "!h-[calc(100vh-24px)] md:!h-[calc(100vh-40px)]",
-            "overflow-hidden rounded-2xl bg-black"
+            "overflow-hidden rounded-2xl bg-black",
           )}
         >
           <DialogTitle className="sr-only">Image preview</DialogTitle>
@@ -306,7 +314,7 @@ export function ListingGallery({
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
 
 function GalleryTile({
@@ -315,10 +323,10 @@ function GalleryTile({
   radius,
   aspectClassName,
 }: {
-  img: GalleryImage
-  onClick: () => void
-  radius: string
-  aspectClassName: string
+  img: GalleryImage;
+  onClick: () => void;
+  radius: string;
+  aspectClassName: string;
 }) {
   return (
     <button
@@ -327,7 +335,7 @@ function GalleryTile({
       className={cn(
         "group relative w-full overflow-hidden bg-muted",
         "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-        radius
+        radius,
       )}
     >
       <div className={cn("relative w-full", aspectClassName)}>
@@ -343,5 +351,5 @@ function GalleryTile({
         <div className="absolute inset-0 bg-black/5" />
       </div>
     </button>
-  )
+  );
 }

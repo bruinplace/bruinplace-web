@@ -9,7 +9,7 @@ function getEnv(key: string, fallback: string): string {
 export const apiEnv = {
   baseUrl: getEnv(
     "NEXT_PUBLIC_API_BASE_URL",
-    "http://127.0.0.1:8000/api/v1"
+    "http://127.0.0.1:8000/api/v1",
   ).replace(/\/$/, ""),
 } as const;
 

@@ -4,7 +4,6 @@ import SettingsPanel from "@/components/profile/SettingsPanel";
 import FavoritedListingsPanel from "@/components/profile/FavoritedListingsPanel";
 import ReviewsPanel from "@/components/profile/ReviewsPanel";
 
-
 export default function ProfileSettings() {
   return (
     <div className="space-y-6">
@@ -30,13 +29,22 @@ export default function ProfileSettings() {
       {/* Tabs */}
       <Tabs defaultValue="settings" className="w-full">
         <TabsList className="bg-transparent p-0">
-          <TabsTrigger value="favorites" className="data-[state=active]:bg-zinc-100">
+          <TabsTrigger
+            value="favorites"
+            className="data-[state=active]:bg-zinc-100"
+          >
             Favorited Listings
           </TabsTrigger>
-          <TabsTrigger value="reviews" className="data-[state=active]:bg-zinc-100">
+          <TabsTrigger
+            value="reviews"
+            className="data-[state=active]:bg-zinc-100"
+          >
             Reviews
           </TabsTrigger>
-          <TabsTrigger value="settings" className="data-[state=active]:bg-zinc-100">
+          <TabsTrigger
+            value="settings"
+            className="data-[state=active]:bg-zinc-100"
+          >
             Settings
           </TabsTrigger>
         </TabsList>
@@ -44,7 +52,7 @@ export default function ProfileSettings() {
         <div className="pt-6">
           <TabsContent value="favorites">
             <FavoritedListingsPanel />
-        </TabsContent>
+          </TabsContent>
 
           <TabsContent value="reviews">
             <ReviewsPanel />

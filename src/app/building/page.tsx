@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { ReviewModal } from "@/components/reviews/AddReviewModal"
-import { ReviewPopupModal } from "@/components/reviews/ReviewPopupModal"
+import * as React from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { ReviewModal } from "@/components/reviews/AddReviewModal";
+import { ReviewPopupModal } from "@/components/reviews/ReviewPopupModal";
 import {
   Heart,
   Share2,
@@ -19,31 +19,34 @@ import {
   Sparkles,
   Volume2,
   CalendarClock,
-} from "lucide-react"
+} from "lucide-react";
 
-import { ListingCard, type UnitListing } from "@/components/listings/ListingCard"
+import {
+  ListingCard,
+  type UnitListing,
+} from "@/components/listings/ListingCard";
 
 type Building = {
-  id: string
-  name: string
-  address: string
-  rating: number
-  reviewsCount: number
-  images?: string[]
+  id: string;
+  name: string;
+  address: string;
+  rating: number;
+  reviewsCount: number;
+  images?: string[];
   // building-level aggregates
-  unitsCount: number
-  priceMin: number
-  priceMax: number
-}
+  unitsCount: number;
+  priceMin: number;
+  priceMax: number;
+};
 
 type Review = {
-  id: string
-  name: string
-  dateLabel: string
-  rating: number
-  text: string
-  tags: string[]
-}
+  id: string;
+  name: string;
+  dateLabel: string;
+  rating: number;
+  text: string;
+  tags: string[];
+};
 
 const MOCK_BUILDING: Building = {
   id: "1",
@@ -55,7 +58,7 @@ const MOCK_BUILDING: Building = {
   unitsCount: 28,
   priceMin: 1250,
   priceMax: 2100,
-}
+};
 
 const MOCK_UNITS: UnitListing[] = Array.from({ length: 6 }).map((_, i) => ({
   id: String(i + 1),
@@ -67,7 +70,7 @@ const MOCK_UNITS: UnitListing[] = Array.from({ length: 6 }).map((_, i) => ({
   rating: 4.2,
   reviewsCount: 17,
   images: [],
-}))
+}));
 
 const MOCK_REVIEWS: Review[] = [
   {
@@ -75,8 +78,7 @@ const MOCK_REVIEWS: Review[] = [
     name: "Civic Bruin",
     dateLabel: "2024 · 3 months ago",
     rating: 4,
-    text:
-      "Great building overall. Clean common areas and responsive management. Some noise on weekends.",
+    text: "Great building overall. Clean common areas and responsive management. Some noise on weekends.",
     tags: ["Management 5/5", "Cleanliness 4/5", "Noise 3/5", "Value 4/5"],
   },
   {
@@ -87,14 +89,14 @@ const MOCK_REVIEWS: Review[] = [
     text: "Awesome location and amenities. Parking is the only downside.",
     tags: ["Amenities 5/5", "Location 5/5", "Parking 3/5", "Value 4/5"],
   },
-]
+];
 
 const REVIEW_MODAL_IMAGES = [
   "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1400&q=60",
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=60",
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=60",
   "https://images.unsplash.com/photo-1505691723518-36a5ac3b2d82?auto=format&fit=crop&w=1400&q=60",
-]
+];
 
 function getInitials(name: string) {
   return name
@@ -102,18 +104,18 @@ function getInitials(name: string) {
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
+    .join("");
 }
 
 function ImagePlaceholder({ className }: { className?: string }) {
-  return <div className={`h-full w-full bg-muted ${className ?? ""}`} />
+  return <div className={`h-full w-full bg-muted ${className ?? ""}`} />;
 }
 
 function Stars({ value, size = 22 }: { value: number; size?: number }) {
-  const fullStars = Math.floor(value)
-  const hasPartial = value % 1 !== 0
-  const partialFill = value % 1
-  const gradientPrefix = React.useId().replace(/:/g, "")
+  const fullStars = Math.floor(value);
+  const hasPartial = value % 1 !== 0;
+  const partialFill = value % 1;
+  const gradientPrefix = React.useId().replace(/:/g, "");
 
   return (
     <div className="flex items-center gap-1">
@@ -126,21 +128,24 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
               style={{ width: size, height: size }}
               fill="currentColor"
             />
-          )
+          );
         }
         if (i === fullStars && hasPartial) {
-          const gradientId = `${gradientPrefix}-star-grad-${i}`
+          const gradientId = `${gradientPrefix}-star-grad-${i}`;
           return (
             <svg key={i} width={size} height={size} viewBox="0 0 24 24">
               <defs>
                 <linearGradient id={gradientId}>
                   <stop offset={`${partialFill * 100}%`} stopColor="#F6C24A" />
-                  <stop offset={`${partialFill * 100}%`} stopColor="rgba(0,0,0,0.2)" />
+                  <stop
+                    offset={`${partialFill * 100}%`}
+                    stopColor="rgba(0,0,0,0.2)"
+                  />
                 </linearGradient>
               </defs>
               <Star fill={`url(#${gradientId})`} stroke="#F6C24A" />
             </svg>
-          )
+          );
         }
         return (
           <Star
@@ -148,10 +153,10 @@ function Stars({ value, size = 22 }: { value: number; size?: number }) {
             className="text-muted-foreground/40"
             style={{ width: size, height: size }}
           />
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 function RatingBars() {
@@ -161,11 +166,14 @@ function RatingBars() {
     { label: "3 stars", pct: 0.18 },
     { label: "2 stars", pct: 0.08 },
     { label: "1 star", pct: 0.12 },
-  ]
+  ];
   return (
     <div className="space-y-2">
       {rows.map((r) => (
-        <div key={r.label} className="grid grid-cols-[64px_1fr] items-center gap-3">
+        <div
+          key={r.label}
+          className="grid grid-cols-[64px_1fr] items-center gap-3"
+        >
           <div className="text-xs text-muted-foreground">{r.label}</div>
           <div className="h-2 rounded-full bg-muted">
             <div
@@ -176,21 +184,23 @@ function RatingBars() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export default function BuildingPage({ params }: { params: { id: string } }) {
-  const building = { ...MOCK_BUILDING, id: params.id }
-  const [addReviewOpen, setAddReviewOpen] = React.useState(false)
-  const [selectedReview, setSelectedReview] = React.useState<Review | null>(null)
-  const [reviewModalOpen, setReviewModalOpen] = React.useState(false)
-  const [activeThumbIndex, setActiveThumbIndex] = React.useState(0)
+  const building = { ...MOCK_BUILDING, id: params.id };
+  const [addReviewOpen, setAddReviewOpen] = React.useState(false);
+  const [selectedReview, setSelectedReview] = React.useState<Review | null>(
+    null,
+  );
+  const [reviewModalOpen, setReviewModalOpen] = React.useState(false);
+  const [activeThumbIndex, setActiveThumbIndex] = React.useState(0);
 
   const openReviewModal = (review: Review) => {
-    setSelectedReview(review)
-    setActiveThumbIndex(0)
-    setReviewModalOpen(true)
-  }
+    setSelectedReview(review);
+    setActiveThumbIndex(0);
+    setReviewModalOpen(true);
+  };
 
   const reviewChips = selectedReview
     ? selectedReview.tags.slice(0, 4).map((label, idx) => {
@@ -199,10 +209,10 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
           <Sparkles key="cleanliness" className="h-4 w-4" />,
           <Volume2 key="noise" className="h-4 w-4" />,
           <CalendarClock key="lease" className="h-4 w-4" />,
-        ]
-        return { icon: icons[idx], label }
+        ];
+        return { icon: icons[idx], label };
       })
-    : []
+    : [];
 
   return (
     <div className="min-h-dvh bg-background">
@@ -217,7 +227,10 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
 
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="relative overflow-hidden rounded-2xl bg-muted">
+              <div
+                key={i}
+                className="relative overflow-hidden rounded-2xl bg-muted"
+              >
                 <div className="aspect-[16/9]">
                   <ImagePlaceholder />
                 </div>
@@ -243,15 +256,23 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
               <div className="flex items-center gap-3">
                 <Stars value={building.rating} size={32} />
                 <div className="flex items-baseline gap-2">
-                  <div className="text-xl font-semibold">{building.rating.toFixed(1)}</div>
-                  <div className="text-xl text-muted-foreground">({building.reviewsCount})</div>
+                  <div className="text-xl font-semibold">
+                    {building.rating.toFixed(1)}
+                  </div>
+                  <div className="text-xl text-muted-foreground">
+                    ({building.reviewsCount})
+                  </div>
                 </div>
               </div>
 
               <div className="mt-3 flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-4xl font-semibold tracking-tight">{building.name}</div>
-                  <div className="mt-2 text-2xl text-muted-foreground">{building.address}</div>
+                  <div className="text-4xl font-semibold tracking-tight">
+                    {building.name}
+                  </div>
+                  <div className="mt-2 text-2xl text-muted-foreground">
+                    {building.address}
+                  </div>
                   <div className="mt-3 text-xl">
                     From{" "}
                     <span className="font-semibold">
@@ -286,7 +307,8 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
               {/* Stats row (building-specific) */}
               <div className="mt-5 flex flex-wrap items-center gap-6 text-2xl">
                 <span>
-                  <span className="font-semibold">{building.unitsCount}</span> units
+                  <span className="font-semibold">{building.unitsCount}</span>{" "}
+                  units
                 </span>
                 <span className="text-muted-foreground">|</span>
                 <span>
@@ -352,7 +374,9 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
             {/* Reviews (same as listing page) */}
             <div className="mt-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Reviews ({MOCK_REVIEWS.length})</h2>
+                <h2 className="text-lg font-semibold">
+                  Reviews ({MOCK_REVIEWS.length})
+                </h2>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="secondary"
@@ -377,8 +401,8 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
                       onClick={() => openReviewModal(r)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault()
-                          openReviewModal(r)
+                          e.preventDefault();
+                          openReviewModal(r);
                         }
                       }}
                       className="rounded-2xl p-4 cursor-pointer transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -386,19 +410,29 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="font-semibold">{r.name}</div>
-                          <div className="text-xs text-muted-foreground">{r.dateLabel}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.dateLabel}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Stars value={r.rating} size={22} />
-                          <span className="ml-2 text-sm font-medium">{r.rating.toFixed(1)}</span>
+                          <span className="ml-2 text-sm font-medium">
+                            {r.rating.toFixed(1)}
+                          </span>
                         </div>
                       </div>
 
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{r.text}</p>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {r.text}
+                      </p>
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         {r.tags.map((t) => (
-                          <Badge key={t} variant="secondary" className="rounded-full">
+                          <Badge
+                            key={t}
+                            variant="secondary"
+                            className="rounded-full"
+                          >
                             {t}
                           </Badge>
                         ))}
@@ -409,17 +443,24 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
 
                 <Card className="h-fit rounded-2xl p-4">
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl font-semibold">{building.rating.toFixed(1)}</div>
+                    <div className="text-3xl font-semibold">
+                      {building.rating.toFixed(1)}
+                    </div>
                     <div>
                       <Stars value={building.rating} />
-                      <div className="text-xs text-muted-foreground">{building.reviewsCount} reviews</div>
+                      <div className="text-xs text-muted-foreground">
+                        {building.reviewsCount} reviews
+                      </div>
                     </div>
                   </div>
                   <div className="mt-4">
                     <RatingBars />
                   </div>
                   <div className="mt-4">
-                    <Input placeholder="Search reviews…" className="rounded-full" />
+                    <Input
+                      placeholder="Search reviews…"
+                      className="rounded-full"
+                    />
                   </div>
                 </Card>
               </div>
@@ -430,7 +471,9 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
           <aside className="block">
             <div className="sticky top-6">
               <Card className="rounded-2xl p-5">
-                <div className="text-sm font-semibold">Contact this building</div>
+                <div className="text-sm font-semibold">
+                  Contact this building
+                </div>
 
                 <div className="mt-4 flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-semibold">
@@ -438,7 +481,9 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
                   </div>
                   <div>
                     <div className="text-sm font-semibold">The Plaza</div>
-                    <div className="text-xs text-muted-foreground">Verified</div>
+                    <div className="text-xs text-muted-foreground">
+                      Verified
+                    </div>
                   </div>
                 </div>
 
@@ -492,7 +537,9 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
                 <div className="aspect-[16/10] overflow-hidden rounded-xl bg-muted" />
                 <div className="mt-3">
                   <div className="text-lg font-semibold">Building {i + 1}</div>
-                  <div className="text-xs text-muted-foreground">Los Angeles, CA</div>
+                  <div className="text-xs text-muted-foreground">
+                    Los Angeles, CA
+                  </div>
                 </div>
               </Card>
             ))}
@@ -511,13 +558,15 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
         }}
         rating={selectedReview?.rating ?? 0}
         text={selectedReview?.text ?? ""}
-        mainImageUrl={REVIEW_MODAL_IMAGES[activeThumbIndex] ?? REVIEW_MODAL_IMAGES[0]}
+        mainImageUrl={
+          REVIEW_MODAL_IMAGES[activeThumbIndex] ?? REVIEW_MODAL_IMAGES[0]
+        }
         thumbnails={REVIEW_MODAL_IMAGES}
         activeThumbIndex={activeThumbIndex}
         onSelectThumb={setActiveThumbIndex}
         onNext={() =>
           setActiveThumbIndex((idx) =>
-            Math.min(idx + 1, REVIEW_MODAL_IMAGES.length - 1)
+            Math.min(idx + 1, REVIEW_MODAL_IMAGES.length - 1),
           )
         }
       />
@@ -526,9 +575,9 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
         open={addReviewOpen}
         onOpenChange={setAddReviewOpen}
         onSubmit={async (draft) => {
-          console.log("submitted review draft:", draft)
+          console.log("submitted review draft:", draft);
         }}
       />
     </div>
-  )
+  );
 }

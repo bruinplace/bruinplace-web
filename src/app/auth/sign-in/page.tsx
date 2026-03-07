@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { UserCog } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UserCog } from "lucide-react";
 
 export default function SignInPage() {
   return (
@@ -21,9 +21,7 @@ export default function SignInPage() {
           <div className="text-2xl font-semibold text-[#71C4FF]">
             BruinPlace
           </div>
-          <div className="text-sm text-zinc-700">
-            Sign in to continue.
-          </div>
+          <div className="text-sm text-zinc-700">Sign in to continue.</div>
         </div>
 
         <form className="mt-8 flex flex-col gap-5">
@@ -73,5 +71,5 @@ export default function SignInPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }

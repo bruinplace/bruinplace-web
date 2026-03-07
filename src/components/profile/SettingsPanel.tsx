@@ -13,7 +13,9 @@ export default function SettingsPanel() {
         <CardContent className="flex items-center justify-between p-6">
           <div className="flex items-center gap-4">
             <Avatar className="h-12 w-12">
-              <AvatarFallback className="bg-sky-500 text-white">JB</AvatarFallback>
+              <AvatarFallback className="bg-sky-500 text-white">
+                JB
+              </AvatarFallback>
             </Avatar>
 
             <div className="flex items-center gap-2">
@@ -96,7 +98,9 @@ function InfoItem({
   return (
     <div>
       <div className="text-xs text-zinc-500">{label}</div>
-      <div className={`mt-1 text-sm font-medium text-zinc-900 ${multiline ? "whitespace-pre-line" : ""}`}>
+      <div
+        className={`mt-1 text-sm font-medium text-zinc-900 ${multiline ? "whitespace-pre-line" : ""}`}
+      >
         {value}
       </div>
     </div>

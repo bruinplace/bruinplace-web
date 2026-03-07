@@ -36,7 +36,7 @@ function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
 function Button(
   props: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: "primary" | "ghost";
-  }
+  },
 ) {
   const variant = props.variant ?? "primary";
   return (
@@ -135,7 +135,9 @@ export default function NewSubletPage() {
       >
         {/* Header */}
         <div className="relative mb-8 flex items-center justify-center">
-          <h1 className="text-xl font-semibold text-zinc-900">Add your sublet</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">
+            Add your sublet
+          </h1>
         </div>
 
         {/* Address */}
@@ -229,7 +231,9 @@ export default function NewSubletPage() {
 
         {/* Parking */}
         <div className="mb-6">
-          <div className="mb-2 text-sm font-semibold text-zinc-900">Parking</div>
+          <div className="mb-2 text-sm font-semibold text-zinc-900">
+            Parking
+          </div>
 
           <div className="flex items-center justify-between py-2">
             <div className="text-xs text-zinc-700">Spots</div>

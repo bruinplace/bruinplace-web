@@ -34,8 +34,7 @@ const MOCK_REVIEWS: Review[] = [
     initials: "JB",
     addressLine: "330 De Neve Dr, Los Angeles, CA 90024",
     rating: 4.5,
-    text:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     tags: [
       { label: "Management", score: "5/5" },
       { label: "Cleanliness", score: "4/5" },
@@ -43,8 +42,34 @@ const MOCK_REVIEWS: Review[] = [
       { label: "Lease Flexibility", score: "5/5" },
     ],
   },
-  { id: "r2", name: "Joe Bruin", initials: "JB", addressLine: "330 De Neve Dr, Los Angeles, CA 90024", rating: 4.0, text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", tags: [{ label: "Management", score: "5/5" }, { label: "Cleanliness", score: "4/5" }, { label: "Noise Level", score: "5/5" }, { label: "Lease Flexibility", score: "5/5" }] },
-  { id: "r3", name: "Joe Bruin", initials: "JB", addressLine: "330 De Neve Dr, Los Angeles, CA 90024", rating: 4.5, text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", tags: [{ label: "Management", score: "5/5" }, { label: "Cleanliness", score: "4/5" }, { label: "Noise Level", score: "5/5" }, { label: "Lease Flexibility", score: "5/5" }] },
+  {
+    id: "r2",
+    name: "Joe Bruin",
+    initials: "JB",
+    addressLine: "330 De Neve Dr, Los Angeles, CA 90024",
+    rating: 4.0,
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    tags: [
+      { label: "Management", score: "5/5" },
+      { label: "Cleanliness", score: "4/5" },
+      { label: "Noise Level", score: "5/5" },
+      { label: "Lease Flexibility", score: "5/5" },
+    ],
+  },
+  {
+    id: "r3",
+    name: "Joe Bruin",
+    initials: "JB",
+    addressLine: "330 De Neve Dr, Los Angeles, CA 90024",
+    rating: 4.5,
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    tags: [
+      { label: "Management", score: "5/5" },
+      { label: "Cleanliness", score: "4/5" },
+      { label: "Noise Level", score: "5/5" },
+      { label: "Lease Flexibility", score: "5/5" },
+    ],
+  },
 ];
 
 type SortKey = "newest" | "highest" | "lowest";
@@ -81,13 +106,13 @@ export default function ReviewsPanel() {
       buckets[k] += 1;
     }
     const total = MOCK_REVIEWS.length || 1;
-    return ([
+    return [
       { stars: 5, count: buckets[5], pct: (buckets[5] / total) * 100 },
       { stars: 4, count: buckets[4], pct: (buckets[4] / total) * 100 },
       { stars: 3, count: buckets[3], pct: (buckets[3] / total) * 100 },
       { stars: 2, count: buckets[2], pct: (buckets[2] / total) * 100 },
       { stars: 1, count: buckets[1], pct: (buckets[1] / total) * 100 },
-    ]);
+    ];
   }, []);
 
   return (
@@ -95,7 +120,9 @@ export default function ReviewsPanel() {
       {/* Top summary row */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-3">
-          <div className="text-sm font-semibold text-zinc-900">Average user rating</div>
+          <div className="text-sm font-semibold text-zinc-900">
+            Average user rating
+          </div>
           <StarRow rating={avg} size={18} />
           <div className="text-sm text-zinc-700">
             <span className="font-semibold">{avg}</span> out of 5 stars{" "}
@@ -114,7 +141,9 @@ export default function ReviewsPanel() {
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="text-base">Reviews ({MOCK_REVIEWS.length})</CardTitle>
+            <CardTitle className="text-base">
+              Reviews ({MOCK_REVIEWS.length})
+            </CardTitle>
 
             <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
               <div className="w-full md:w-[260px]">
@@ -184,10 +213,22 @@ function StarRow({ rating, size = 16 }: { rating: number; size?: number }) {
         const isHalf = idx === full + 1 && half;
 
         return (
-          <span key={idx} className="relative inline-block" style={{ width: size, height: size }}>
-            <Star className={cn("h-full w-full", isFull ? "fill-amber-400 text-amber-400" : "text-amber-300")} />
+          <span
+            key={idx}
+            className="relative inline-block"
+            style={{ width: size, height: size }}
+          >
+            <Star
+              className={cn(
+                "h-full w-full",
+                isFull ? "fill-amber-400 text-amber-400" : "text-amber-300",
+              )}
+            />
             {isHalf && (
-              <span className="absolute inset-0 overflow-hidden" style={{ width: "50%" }}>
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: "50%" }}
+              >
                 <Star className="h-full w-full fill-amber-400 text-amber-400" />
               </span>
             )}
