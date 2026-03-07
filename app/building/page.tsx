@@ -6,7 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Heart, Share2, Star, Mail, Phone, Search } from "lucide-react"
+import { ReviewModal } from "@/components/reviews/AddReviewModal"
+import { ReviewPopupModal } from "@/components/reviews/ReviewPopupModal"
+import {
+  Heart,
+  Share2,
+  Star,
+  Mail,
+  Phone,
+  Search,
+  Building2,
+  Sparkles,
+  Volume2,
+  CalendarClock,
+} from "lucide-react"
 
 import { ListingCard, type UnitListing } from "@/components/listings/ListingCard"
 
@@ -75,6 +88,22 @@ const MOCK_REVIEWS: Review[] = [
     tags: ["Amenities 5/5", "Location 5/5", "Parking 3/5", "Value 4/5"],
   },
 ]
+
+const REVIEW_MODAL_IMAGES = [
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1400&q=60",
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=60",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=60",
+  "https://images.unsplash.com/photo-1505691723518-36a5ac3b2d82?auto=format&fit=crop&w=1400&q=60",
+]
+
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("")
+}
 
 function ImagePlaceholder({ className }: { className?: string }) {
   return <div className={`h-full w-full bg-muted ${className ?? ""}`} />
@@ -152,6 +181,28 @@ function RatingBars() {
 
 export default function BuildingPage({ params }: { params: { id: string } }) {
   const building = { ...MOCK_BUILDING, id: params.id }
+  const [addReviewOpen, setAddReviewOpen] = React.useState(false)
+  const [selectedReview, setSelectedReview] = React.useState<Review | null>(null)
+  const [reviewModalOpen, setReviewModalOpen] = React.useState(false)
+  const [activeThumbIndex, setActiveThumbIndex] = React.useState(0)
+
+  const openReviewModal = (review: Review) => {
+    setSelectedReview(review)
+    setActiveThumbIndex(0)
+    setReviewModalOpen(true)
+  }
+
+  const reviewChips = selectedReview
+    ? selectedReview.tags.slice(0, 4).map((label, idx) => {
+        const icons = [
+          <Building2 key="management" className="h-4 w-4" />,
+          <Sparkles key="cleanliness" className="h-4 w-4" />,
+          <Volume2 key="noise" className="h-4 w-4" />,
+          <CalendarClock key="lease" className="h-4 w-4" />,
+        ]
+        return { icon: icons[idx], label }
+      })
+    : []
 
   return (
     <div className="min-h-dvh bg-background">
@@ -303,7 +354,11 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold">Reviews ({MOCK_REVIEWS.length})</h2>
                 <div className="flex items-center gap-2">
-                  <Button variant="secondary" className="rounded-full">
+                  <Button
+                    variant="secondary"
+                    className="rounded-full"
+                    onClick={() => setAddReviewOpen(true)}
+                  >
                     Add review
                   </Button>
                   <Button variant="secondary" className="rounded-full">
@@ -315,7 +370,19 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
               <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
                 <div className="space-y-4">
                   {MOCK_REVIEWS.map((r) => (
-                    <Card key={r.id} className="rounded-2xl p-4">
+                    <Card
+                      key={r.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openReviewModal(r)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault()
+                          openReviewModal(r)
+                        }
+                      }}
+                      className="rounded-2xl p-4 cursor-pointer transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="font-semibold">{r.name}</div>
@@ -432,6 +499,36 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </section>
+
+      <ReviewPopupModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        chips={reviewChips}
+        user={{
+          initials: getInitials(selectedReview?.name ?? ""),
+          name: selectedReview?.name ?? "",
+          years: `Posted ${selectedReview?.dateLabel ?? ""}`,
+        }}
+        rating={selectedReview?.rating ?? 0}
+        text={selectedReview?.text ?? ""}
+        mainImageUrl={REVIEW_MODAL_IMAGES[activeThumbIndex] ?? REVIEW_MODAL_IMAGES[0]}
+        thumbnails={REVIEW_MODAL_IMAGES}
+        activeThumbIndex={activeThumbIndex}
+        onSelectThumb={setActiveThumbIndex}
+        onNext={() =>
+          setActiveThumbIndex((idx) =>
+            Math.min(idx + 1, REVIEW_MODAL_IMAGES.length - 1)
+          )
+        }
+      />
+
+      <ReviewModal
+        open={addReviewOpen}
+        onOpenChange={setAddReviewOpen}
+        onSubmit={async (draft) => {
+          console.log("submitted review draft:", draft)
+        }}
+      />
     </div>
   )
 }

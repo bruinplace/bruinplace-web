@@ -57,7 +57,7 @@ function Star({
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className={className}
+      className={cn(className, "rotate-180")}
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth={1.8}
