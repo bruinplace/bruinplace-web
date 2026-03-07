@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { QueryKeys } from "@/lib/query-keys";
+import { api } from "../../lib/api";
+import { QueryKeys } from "../../lib/query-keys";
 
 export type Listing = {
   id: string;
