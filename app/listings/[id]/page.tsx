@@ -1,3 +1,5 @@
+
+
 "use client"
 
 import React from "react"
@@ -86,6 +88,11 @@ const MOCK_REVIEWS: Review[] = [
  * Lucide-based stars with decimal support (e.g., 4.4).
  * Uses an overlay fill clipped to a percentage width for partial stars.
  */
+
+
+
+
+
 function Stars({ value, size = 22 }: { value: number; size?: number }) {
   const full = Math.floor(value)
   const frac = value - full
@@ -508,3 +515,4 @@ function HighlightPlain({ icon, label }: { icon: React.ReactNode; label: string 
     </div>
   )
 }
+

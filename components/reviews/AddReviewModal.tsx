@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Modal } from "@/components/ui/modal"
+import { Camera, Check, Plus } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 type RatingKey = "management" | "cleanliness" | "noiseLevel" | "leaseFlexibility"
 
 export type ReviewDraft = {
-  // Optional: you can add propertyId / buildingId in your app layer
   leaseStart?: string // "YYYY-MM"
   leaseEnd?: string // "YYYY-MM"
   reviewText: string
@@ -59,7 +60,7 @@ function Star({
       className={className}
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth={1.5}
+      strokeWidth={1.8}
       {...props}
     >
       <path
@@ -84,10 +85,10 @@ function StarRating({
   const shown = hover ?? value
 
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="text-sm font-medium">{label}</div>
+    <div className="flex items-center justify-between gap-6">
+      <div className="text-lg">{label}</div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-3">
         {Array.from({ length: 5 }).map((_, i) => {
           const n = i + 1
           const filled = n <= shown
@@ -105,12 +106,26 @@ function StarRating({
             >
               <Star
                 filled={filled}
-                className="h-5 w-5 text-amber-500"
+                className={cn(
+                  "h-7 w-7 transition",
+                  filled ? "text-amber-400" : "text-amber-300/70"
+                )}
               />
             </button>
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div className="flex items-center gap-4">
+      <div className="h-10 w-10 rounded-xl bg-sky-50 grid place-items-center text-sky-600">
+        {icon}
+      </div>
+      <div className="text-2xl font-semibold tracking-tight">{title}</div>
     </div>
   )
 }
@@ -125,7 +140,6 @@ function PhotosPicker({
   maxPhotos: number
 }) {
   const inputRef = React.useRef<HTMLInputElement | null>(null)
-
   const remaining = Math.max(0, maxPhotos - files.length)
 
   const handlePick = (picked: FileList | null) => {
@@ -135,29 +149,32 @@ function PhotosPicker({
     onChange(merged)
   }
 
-  const removeAt = (idx: number) => {
-    onChange(files.filter((_, i) => i !== idx))
-  }
+  const removeAt = (idx: number) => onChange(files.filter((_, i) => i !== idx))
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold">Add Photos</div>
-          <div className="text-xs text-muted-foreground">
-            ({files.length}/{maxPhotos})
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-sky-50 grid place-items-center text-sky-600">
+            <Camera className="h-5 w-5" />
+          </div>
+
+          <div className="text-2xl font-semibold tracking-tight">
+            Add Photos{" "}
+            <span className="text-muted-foreground font-normal">
+              ({files.length}/{maxPhotos})
+            </span>
           </div>
         </div>
 
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          className="rounded-xl"
+          className="text-lg font-medium text-foreground/70 hover:text-foreground transition disabled:opacity-40"
           disabled={remaining === 0}
           onClick={() => inputRef.current?.click()}
         >
           Add
-        </Button>
+        </button>
 
         <input
           ref={inputRef}
@@ -171,25 +188,32 @@ function PhotosPicker({
 
       <button
         type="button"
-        className="w-full rounded-2xl border-2 border-dashed p-8 text-center hover:bg-muted/40 transition"
+        className={cn(
+          "w-full rounded-[22px] border-2 border-dashed",
+          "border-muted-foreground/40 bg-muted/10",
+          "h-[260px] sm:h-[290px]",
+          "grid place-items-center text-center",
+          "hover:bg-muted/20 transition",
+          "disabled:opacity-40 disabled:hover:bg-muted/10"
+        )}
         onClick={() => inputRef.current?.click()}
         disabled={remaining === 0}
         aria-disabled={remaining === 0}
       >
-        <div className="mx-auto flex flex-col items-center gap-2">
-          <div className="text-3xl leading-none">+</div>
-          <div className="text-sm text-muted-foreground">
-            Add your photos here
+        <div className="flex flex-col items-center gap-4 text-muted-foreground">
+          <div className="h-14 w-14 rounded-full bg-sky-50 grid place-items-center text-sky-500">
+            <Plus className="h-7 w-7" />
           </div>
+          <div className="text-lg font-medium">Upload your photos here</div>
         </div>
       </button>
 
       {files.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {files.map((f, idx) => (
             <div
               key={`${f.name}-${idx}`}
-              className="rounded-xl border p-3 flex items-center justify-between gap-2"
+              className="rounded-xl border px-4 py-3 flex items-center justify-between gap-3"
             >
               <div className="min-w-0">
                 <div className="text-sm font-medium truncate">{f.name}</div>
@@ -197,12 +221,7 @@ function PhotosPicker({
                   {(f.size / 1024 / 1024).toFixed(2)} MB
                 </div>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                className="rounded-xl"
-                onClick={() => removeAt(idx)}
-              >
+              <Button type="button" variant="ghost" className="rounded-xl" onClick={() => removeAt(idx)}>
                 Remove
               </Button>
             </div>
@@ -213,10 +232,6 @@ function PhotosPicker({
   )
 }
 
-/**
- * Reusable scrollable review popup.
- * Key idea: keep the modal shell as-is, but make the inside a flex column where only the body scrolls.
- */
 export function ReviewModal({
   open,
   onOpenChange,
@@ -235,17 +250,13 @@ export function ReviewModal({
     ...(initialValue?.ratings ?? {}),
   })
 
-  // Reset when opening (so it feels like a clean "new review" each time unless initialValue changes)
   React.useEffect(() => {
     if (!open) return
     setLeaseStart(initialValue?.leaseStart ?? "")
     setLeaseEnd(initialValue?.leaseEnd ?? "")
     setReviewText(initialValue?.reviewText ?? "")
     setPhotos(initialValue?.photos ?? [])
-    setRatings({
-      ...DEFAULT_RATINGS,
-      ...(initialValue?.ratings ?? {}),
-    })
+    setRatings({ ...DEFAULT_RATINGS, ...(initialValue?.ratings ?? {}) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -279,111 +290,117 @@ export function ReviewModal({
       onOpenChange={onOpenChange}
       title={title}
       maxWidthClassName="sm:max-w-[820px]"
-      heightClassName="h-[80vh]"
+      heightClassName="h-[84vh]"
+      contentClassName="px-8 sm:px-10 py-10"
+      fades={false}
       footer={
-        <div className="px-6 sm:px-10 py-5 flex items-center justify-end gap-3 border-t bg-background">
-          <Button
-            type="button"
-            variant="ghost"
-            className="rounded-2xl"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="review-modal-form"
-            className="rounded-2xl shadow-md"
-            disabled={!canSubmit || submitting}
-          >
-            {submitting ? "Submitting..." : "Submit review"}
-          </Button>
+        <div className="px-8 sm:px-10 py-6 bg-background">
+          <div className="flex items-center justify-end gap-8">
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+              className="text-lg font-medium text-foreground/70 hover:text-foreground transition disabled:opacity-40"
+            >
+              Cancel
+            </button>
+
+            <Button
+              type="submit"
+              form="review-modal-form"
+              disabled={!canSubmit || submitting}
+              className={cn(
+                "h-14 px-10 rounded-full text-lg font-semibold",
+                "bg-sky-400 hover:bg-sky-500 text-white",
+                "shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+              )}
+            >
+              {submitting ? "Submitting..." : "Submit review"}
+            </Button>
+          </div>
+
+          {/* mobile full-width CTA */}
+          <div className="mt-4 sm:hidden">
+            <Button
+              type="submit"
+              form="review-modal-form"
+              disabled={!canSubmit || submitting}
+              className="w-full h-14 rounded-full text-lg font-semibold bg-sky-400 hover:bg-sky-500 text-white"
+            >
+              {submitting ? "Submitting..." : "Submit review"}
+            </Button>
+          </div>
         </div>
       }
     >
-      {/* This wrapper is what makes the popup scrollable without changing Modal/Dialog. */}
-      <div className="h-full flex flex-col">
-        {/* Body scroll area */}
-        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-6">
-          <form id="review-modal-form" onSubmit={handleSubmit} className="space-y-8">
-            <PhotosPicker files={photos} onChange={setPhotos} maxPhotos={maxPhotos} />
+      <form id="review-modal-form" onSubmit={handleSubmit} className="space-y-10">
+        <PhotosPicker files={photos} onChange={setPhotos} maxPhotos={maxPhotos} />
 
-            <div className="border-t pt-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-semibold">Ratings</div>
-              </div>
-
-              <div className="space-y-3">
-                {(Object.keys(RATING_LABELS) as RatingKey[]).map((key) => (
-                  <StarRating
-                    key={key}
-                    label={RATING_LABELS[key]}
-                    value={ratings[key]}
-                    onChange={(n) => setRating(key, n)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t pt-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-semibold">Lease Length</div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-                <div className="space-y-2">
-                  <Label htmlFor="lease-start" className="text-sm">
-                    Start (Month / Year)
-                  </Label>
-                  <Input
-                    id="lease-start"
-                    type="month"
-                    value={leaseStart}
-                    onChange={(e) => setLeaseStart(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="lease-end" className="text-sm">
-                    End (Month / Year)
-                  </Label>
-                  <Input
-                    id="lease-end"
-                    type="month"
-                    value={leaseEnd}
-                    onChange={(e) => setLeaseEnd(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-6 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-semibold">Review</div>
-              </div>
-
-              <Textarea
-                id="review-text"
-                placeholder="Type your review here..."
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                className="rounded-xl min-h-[180px]"
-                required
+        <div className="border-t pt-10 space-y-6">
+          <SectionHeader icon={<Check className="h-6 w-6" />} title="Ratings" />
+          <div className="space-y-6">
+            {(Object.keys(RATING_LABELS) as RatingKey[]).map((key) => (
+              <StarRating
+                key={key}
+                label={RATING_LABELS[key]}
+                value={ratings[key]}
+                onChange={(n) => setRating(key, n)}
               />
+            ))}
+          </div>
+        </div>
 
-              <div className="text-xs text-muted-foreground">
-                Tip: at least rate one category + write a short comment.
-              </div>
+        <div className="border-t pt-10 space-y-6">
+          <SectionHeader icon={<Check className="h-6 w-6" />} title="Lease Length" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
+            <div className="space-y-2">
+              <Label htmlFor="lease-start" className="text-base">
+                Start (Month / Year)
+              </Label>
+              <Input
+                id="lease-start"
+                type="month"
+                value={leaseStart}
+                onChange={(e) => setLeaseStart(e.target.value)}
+                className="rounded-xl h-12"
+              />
             </div>
 
-            {/* Extra bottom padding so the last field isn't hidden behind the footer */}
-            <div className="h-6" />
-          </form>
+            <div className="space-y-2">
+              <Label htmlFor="lease-end" className="text-base">
+                End (Month / Year)
+              </Label>
+              <Input
+                id="lease-end"
+                type="month"
+                value={leaseEnd}
+                onChange={(e) => setLeaseEnd(e.target.value)}
+                className="rounded-xl h-12"
+              />
+            </div>
+          </div>
         </div>
-      </div>
+
+        <div className="border-t pt-10 space-y-6">
+          <SectionHeader icon={<Check className="h-6 w-6" />} title="Review" />
+
+          <Textarea
+            id="review-text"
+            placeholder="Type your review here..."
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            className="rounded-xl min-h-[200px] text-base"
+            required
+          />
+
+          <div className="text-sm text-muted-foreground">
+            Tip: at least rate one category + write a short comment.
+          </div>
+        </div>
+
+        <div className="h-2" />
+      </form>
     </Modal>
   )
 }

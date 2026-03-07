@@ -110,29 +110,25 @@ export function Modal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className={cn(
-          // ✅ HARD override the default shadcn/radix DialogContent layout
-          "!grid !gap-0 !p-0 !border-0",
+     <DialogContent
+  showCloseButton={false}
+  className={cn(
+    "!grid !gap-0 !p-0 !border-0",
+    "!fixed !left-1/2 !top-1/2 !z-50",
+    "!-translate-x-1/2 !-translate-y-1/2",
 
-          // ✅ Force perfect centering
-          "!fixed !left-1/2 !top-1/2 !z-50",
-          "!-translate-x-1/2 !-translate-y-1/2",
+    // ✅ width rules (less wide)
+    "w-[95vw] sm:w-full",
+    "max-h-[calc(100vh-32px)]",
 
-          // ✅ Never get clipped by viewport
-          "!w-[calc(100vw-32px)]",
-          "!max-h-[calc(100vh-32px)]",
+    "!flex !flex-col !overflow-hidden",
+    "rounded-[28px]",
+    "shadow-[0_20px_60px_rgba(0,0,0,0.18)]",
 
-          // ✅ Your modal look
-          "!flex !flex-col !overflow-hidden",
-          "rounded-[28px]",
-          "shadow-[0_20px_60px_rgba(0,0,0,0.18)]",
-
-          maxWidthClassName,
-          heightClassName
-        )}
-      >
+    maxWidthClassName,
+    heightClassName
+  )}
+>
         {/* Accessibility title (required by Radix) */}
         {title ? null : <DialogTitle className="sr-only">{a11yTitle}</DialogTitle>}
 

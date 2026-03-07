@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { StarIcon as StarSolid } from "@heroicons/react/24/solid"
-import { StarIcon as StarOutline } from "@heroicons/react/24/outline"
+//import { StarIcon as StarSolid } from "@heroicons/react/24/solid"
+//import { StarIcon as StarOutline } from "@heroicons/react/24/outline"
 import {
   Heart,
   Share2,
