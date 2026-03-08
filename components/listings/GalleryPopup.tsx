@@ -41,16 +41,43 @@ export function GalleryPopup({
   addressText,
   className,
 }: GalleryPopupProps) {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const [saved, setSaved] = useState(false)
+  const [shareState, setShareState] = useState<"idle" | "copied" | "shared">("idle")
 
   useEffect(() => {
     if (!open) return
-    setCurrentIndex(initialIndex)
-  }, [open, initialIndex])
+    onIndexChange?.(initialIndex)
+  }, [open, initialIndex, onIndexChange])
 
   useEffect(() => {
-    onIndexChange?.(currentIndex)
-  }, [currentIndex, onIndexChange])
+    if (shareState === "idle") return
+    const timeout = window.setTimeout(() => setShareState("idle"), 1800)
+    return () => window.clearTimeout(timeout)
+  }, [shareState])
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href
+    const payload = {
+      title: "BruinPlace listing",
+      text: `Check out this listing: ${addressText}`,
+      url: shareUrl,
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(payload)
+        setShareState("shared")
+        return
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+        setShareState("copied")
+      }
+    } catch {
+      setShareState("idle")
+    }
+  }
 
   return (
     <Modal
@@ -75,10 +102,13 @@ export function GalleryPopup({
             </div>
 
             <div className="ml-2 flex items-center gap-3 shrink-0">
-              <ActionIconButton ariaLabel="Save">
-                <Heart className="h-7 w-7" />
+              <ActionIconButton
+                ariaLabel="Save listing"
+                onClick={() => setSaved((prev) => !prev)}
+              >
+                <Heart className={cn("h-7 w-7", saved && "fill-current")} />
               </ActionIconButton>
-              <ActionIconButton ariaLabel="Share">
+              <ActionIconButton ariaLabel="Share listing" onClick={handleShare}>
                 <Share2 className="h-7 w-7" />
               </ActionIconButton>
             </div>
@@ -93,6 +123,12 @@ export function GalleryPopup({
           <div className="mt-2 text-base text-muted-foreground/70">
             {addressText}
           </div>
+
+          {shareState !== "idle" ? (
+            <div className="mt-1 text-sm text-[#3EA6FC]">
+              {shareState === "copied" ? "Listing link copied." : "Share flow opened."}
+            </div>
+          ) : null}
         </div>
       }
       headerRight={null}
@@ -101,7 +137,7 @@ export function GalleryPopup({
         images={images}
         heroRow
         className="mt-2"
-        onOpenIndex={(idx) => setCurrentIndex(idx)}
+        onOpenIndex={onIndexChange}
       />
     </Modal>
   )
@@ -110,14 +146,17 @@ export function GalleryPopup({
 function ActionIconButton({
   children,
   ariaLabel,
+  onClick,
 }: {
   children: React.ReactNode
   ariaLabel: string
+  onClick?: () => void
 }) {
   return (
     <button
       type="button"
       aria-label={ariaLabel}
+      onClick={onClick}
       className="text-sky-500 hover:text-sky-600 transition focus:outline-none"
     >
       {children}

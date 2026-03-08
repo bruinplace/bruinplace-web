@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ReviewModal } from "@/components/reviews/AddReviewModal"
 import { ReviewPopupModal } from "@/components/reviews/ReviewPopupModal"
+import { BuildingGalleryPopup } from "@/components/buildings/BuildingGalleryPopup"
+import { cn } from "@/lib/utils"
 import {
   Heart,
   Share2,
@@ -91,6 +93,15 @@ const REVIEW_MODAL_IMAGES = [
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=60",
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=60",
   "https://images.unsplash.com/photo-1505691723518-36a5ac3b2d82?auto=format&fit=crop&w=1400&q=60",
+]
+
+const BUILDING_GALLERY_IMAGES = [
+  "https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=1800&q=70",
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1800&q=70",
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1800&q=70",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1800&q=70",
+  "https://images.unsplash.com/photo-1505691723518-36a5ac3b2d82?auto=format&fit=crop&w=1800&q=70",
+  "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1800&q=70",
 ]
 
 function getInitials(name: string) {
@@ -179,6 +190,8 @@ function ImagePlaceholder({ className }: { className?: string }) {
 }
 
 function RecommendedBuildingCard() {
+  const [saved, setSaved] = React.useState(false)
+
   return (
     <Card className="rounded-2xl p-3 shadow-lg">
       <div className="space-y-3">
@@ -190,10 +203,11 @@ function RecommendedBuildingCard() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setSaved((prev) => !prev)}
             className="absolute right-3 top-3 h-9 w-9 rounded-full bg-background/70 backdrop-blur hover:bg-background/80"
             aria-label="Save building"
           >
-            <Heart className="h-5 w-5" />
+            <Heart className={cn("h-5 w-5", saved && "fill-[#71C4FF] text-[#71C4FF]")} />
           </Button>
         </div>
 
@@ -223,15 +237,54 @@ export default function BuildingPage({ params }: { params: Promise<{ id: string 
   const { id } = React.use(params)
   const building = { ...MOCK_BUILDING, id }
   const onSeeMore = () => {}
+  const [saved, setSaved] = React.useState(false)
+  const [shareState, setShareState] = React.useState<"idle" | "copied" | "shared">("idle")
   const [addReviewOpen, setAddReviewOpen] = React.useState(false)
   const [selectedReview, setSelectedReview] = React.useState<Review | null>(null)
   const [reviewModalOpen, setReviewModalOpen] = React.useState(false)
   const [activeThumbIndex, setActiveThumbIndex] = React.useState(0)
+  const [galleryOpen, setGalleryOpen] = React.useState(false)
+  const [galleryIndex, setGalleryIndex] = React.useState(0)
+
+  const openGalleryAt = (index: number) => {
+    setGalleryIndex(index)
+    setGalleryOpen(true)
+  }
 
   const openReviewModal = (review: Review) => {
     setSelectedReview(review)
     setActiveThumbIndex(0)
     setReviewModalOpen(true)
+  }
+
+  React.useEffect(() => {
+    if (shareState === "idle") return
+    const timeout = window.setTimeout(() => setShareState("idle"), 1800)
+    return () => window.clearTimeout(timeout)
+  }, [shareState])
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href
+    const payload = {
+      title: `${building.name} on BruinPlace`,
+      text: `Check out this building: ${building.address}`,
+      url: shareUrl,
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(payload)
+        setShareState("shared")
+        return
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+        setShareState("copied")
+      }
+    } catch {
+      setShareState("idle")
+    }
   }
 
   const reviewChips = selectedReview
@@ -251,22 +304,45 @@ export default function BuildingPage({ params }: { params: Promise<{ id: string 
       <main className="mx-auto max-w-[1300px] px-6 py-8">
         {/* FULL-WIDTH GALLERY */}
         <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
-          <div className="relative overflow-hidden rounded-2xl bg-muted">
+          <button
+            type="button"
+            onClick={() => openGalleryAt(0)}
+            className="relative overflow-hidden rounded-2xl bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className="aspect-[16/9] max-h-[520px] w-full">
-              <ImagePlaceholder />
+              <img src={BUILDING_GALLERY_IMAGES[0]} alt={`${building.name} hero photo`} className="h-full w-full object-cover" />
             </div>
-          </div>
+          </button>
 
           <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="relative overflow-hidden rounded-2xl bg-muted">
+            {BUILDING_GALLERY_IMAGES.slice(1, 5).map((image, i) => (
+              <div
+                key={image}
+                role="button"
+                tabIndex={0}
+                onClick={() => openGalleryAt(i + 1)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    openGalleryAt(i + 1)
+                  }
+                }}
+                className="relative overflow-hidden rounded-2xl bg-muted cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <div className="aspect-[16/9]">
-                  <ImagePlaceholder />
+                  <img src={image} alt={`${building.name} photo ${i + 2}`} className="h-full w-full object-cover" />
                 </div>
 
                 {i === 3 && (
-                  <div className="absolute bottom-3 right-3">
-                    <Button className="rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
+                  <div className="absolute inset-x-0 bottom-0 flex justify-end p-3 bg-gradient-to-t from-black/45 via-black/15 to-transparent">
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openGalleryAt(0)
+                      }}
+                      className="rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90"
+                    >
                       See all photos
                     </Button>
                   </div>
@@ -306,20 +382,28 @@ export default function BuildingPage({ params }: { params: Promise<{ id: string 
                 <div className="flex items-center gap-5">
                   <button
                     type="button"
-                    aria-label="Save"
+                    aria-label="Save building"
+                    onClick={() => setSaved((prev) => !prev)}
                     className="text-[#71C4FF] hover:opacity-80 transition"
                   >
-                    <Heart className="h-9 w-9" />
+                    <Heart className={cn("h-9 w-9", saved && "fill-current")} />
                   </button>
                   <button
                     type="button"
-                    aria-label="Share"
+                    aria-label="Share building"
+                    onClick={handleShare}
                     className="text-[#71C4FF] hover:opacity-80 transition"
                   >
                     <Share2 className="h-9 w-9" />
                   </button>
                 </div>
               </div>
+
+              {shareState !== "idle" ? (
+                <div className="mt-2 text-sm text-[#3EA6FC]">
+                  {shareState === "copied" ? "Building link copied." : "Share flow opened."}
+                </div>
+              ) : null}
 
               {/* Row 3: building stats */}
               <div className="mt-5 flex flex-wrap items-center gap-6 text-2xl">
@@ -577,6 +661,16 @@ export default function BuildingPage({ params }: { params: Promise<{ id: string 
         onSubmit={async (draft) => {
           console.log("submitted review draft:", draft)
         }}
+      />
+
+      <BuildingGalleryPopup
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        images={BUILDING_GALLERY_IMAGES.map((src) => ({ src }))}
+        initialIndex={galleryIndex}
+        onIndexChange={setGalleryIndex}
+        buildingName={building.name}
+        addressText={building.address}
       />
     </div>
   )
