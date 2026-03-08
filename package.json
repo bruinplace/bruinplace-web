@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "prepare": "husky",
+    "format-check": "prettier --check \"**/*.{ts,tsx}\"",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "type-check": "tsc --noEmit",
     "lint-staged": "lint-staged --config lint-staged.config.mjs"
