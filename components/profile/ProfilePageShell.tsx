@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 type ProfileTab = "favorites" | "reviews" | "settings"
 
@@ -11,17 +11,22 @@ const TABS: Array<{ key: ProfileTab; label: string; href: string }> = [
 
 export function ProfilePageShell({
   activeTab,
+  avatarSrc,
+  avatarFallback = "JB",
   children,
 }: {
   activeTab: ProfileTab
+  avatarSrc?: string
+  avatarFallback?: string
   children: React.ReactNode
 }) {
   return (
     <div className="mx-auto w-full max-w-[1039px] px-4 py-8 sm:px-6 sm:py-10 lg:py-14">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
         <Avatar className="h-[96px] w-[96px] border-2 border-white sm:h-[104px] sm:w-[104px]">
+          {avatarSrc ? <AvatarImage src={avatarSrc} alt="Profile photo" className="object-cover" /> : null}
           <AvatarFallback className="bg-[#71C4FF] text-[42px] font-normal text-white">
-            JB
+            {avatarFallback}
           </AvatarFallback>
         </Avatar>
 
