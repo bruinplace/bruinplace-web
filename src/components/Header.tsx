@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { api, getAuthLoginUrl } from "@/lib/api";
-import { useAuthMe } from "@/hooks/use-auth-me";
-import { QueryKeys } from "@/lib/query-keys";
+import { getAuthLoginUrl } from "@/lib/api";
 import { User, Plus, UserCog, ExternalLink } from "lucide-react";
 import {
   Dialog,
@@ -19,13 +16,6 @@ const UCLA_SSO_URL = getAuthLoginUrl();
 
 export default function Header() {
   const [signInOpen, setSignInOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const { data: authUser } = useAuthMe();
-
-  async function handleSignOut() {
-    await api.post("/auth/logout");
-    await queryClient.invalidateQueries({ queryKey: [QueryKeys.AUTH_ME] });
-  }
 
   return (
     <>

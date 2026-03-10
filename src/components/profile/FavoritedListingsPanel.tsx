@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { type SyntheticEvent, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
@@ -139,9 +139,11 @@ export default function FavoritedListingsPanel() {
 function FavoriteCard({
   listing,
   onUnfavorite,
+  pending,
 }: {
   listing: FavoriteListing;
-  onUnfavorite: (id: string) => void;
+  onUnfavorite: () => void;
+  pending: boolean;
 }) {
   const [favorited, setFavorited] = useState(true);
   const [removing, setRemoving] = useState(false);
@@ -158,7 +160,7 @@ function FavoriteCard({
     // Let the heart visibly toggle off before we animate/remove the card.
     setFavorited(false);
     window.setTimeout(() => setRemoving(true), 120);
-    window.setTimeout(() => onUnfavorite(listing.id), 260);
+    window.setTimeout(() => onUnfavorite(), 260);
   }
 
   return (
@@ -183,11 +185,6 @@ function FavoriteCard({
           className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/90 shadow"
           aria-label="Unfavorite"
           disabled={pending}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onUnfavorite();
-          }}
         >
           <Heart
             className={cn(
