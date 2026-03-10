@@ -2,9 +2,20 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, SlidersHorizontal, User, UserCog } from "lucide-react";
+import { useAuthMe } from "@/hooks/use-auth-me";
+import { api, getAuthLoginUrl } from "@/lib/api";
+import { QueryKeys } from "@/lib/query-keys";
+import {
+  ExternalLink,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  User,
+  UserCog,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +37,14 @@ export default function SearchHeader({
   onFiltersSave: (filters: SearchFilters) => void;
 }) {
   const [signInOpen, setSignInOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { data: authUser } = useAuthMe();
+  const authLoginUrl = getAuthLoginUrl();
+
+  async function handleSignOut() {
+    await api.post("/auth/logout");
+    await queryClient.invalidateQueries({ queryKey: [QueryKeys.AUTH_ME] });
+  }
 
   return (
     <>
@@ -96,17 +115,36 @@ export default function SearchHeader({
               </Link>
             </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSignInOpen(true)}
-              className="h-[37px] rounded-full bg-white border border-sky-600 text-sky-600 hover:bg-white hover:text-sky-600"
-            >
-              <span className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm font-medium">Sign in</span>
-              </span>
-            </Button>
+            {authUser ? (
+              <>
+                <div className="flex max-w-[160px] items-center gap-2 text-sm font-medium text-white">
+                  <User className="h-4 w-4 shrink-0" />
+                  <span className="truncate">
+                    {authUser.name || authUser.email}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSignOut}
+                  className="h-[37px] rounded-full bg-white border border-sky-600 text-sky-600 hover:bg-white hover:text-sky-600"
+                >
+                  <span className="text-sm font-medium">Sign out</span>
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSignInOpen(true)}
+                className="h-[37px] rounded-full bg-white border border-sky-600 text-sky-600 hover:bg-white hover:text-sky-600"
+              >
+                <span className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="text-sm font-medium">Sign in</span>
+                </span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -116,7 +154,7 @@ export default function SearchHeader({
         <DialogContent className="w-[411px] max-w-none rounded-[25px] p-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.25)] border-0">
           <DialogTitle className="sr-only">Sign in</DialogTitle>
           <DialogDescription className="sr-only">
-            You need an account to create a review.
+            Sign in with UCLA SSO.
           </DialogDescription>
 
           <div className="flex flex-col items-center gap-[20px] text-center">
@@ -129,17 +167,18 @@ export default function SearchHeader({
             </div>
 
             <div className="text-sm text-zinc-700">
-              You need an account to create a review.
+              Sign in with your UCLA account to continue.
             </div>
 
             <Button
-              className="h-[42px] w-[220px] rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]"
+              className="h-[42px] w-[260px] rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF] flex items-center gap-2"
               onClick={() => {
                 setSignInOpen(false);
-                window.location.href = "/signup";
+                window.location.href = authLoginUrl;
               }}
             >
-              Create account
+              <ExternalLink className="h-4 w-4" />
+              Continue with UCLA SSO
             </Button>
 
             <div className="flex w-full items-center gap-4">
@@ -148,19 +187,15 @@ export default function SearchHeader({
               <div className="h-px flex-1 bg-zinc-200" />
             </div>
 
-            <div className="text-sm text-zinc-700">
-              Already have an account?
-            </div>
+            <div className="text-sm text-zinc-700">Need help signing in?</div>
 
-            <Button
-              className="h-[42px] w-[220px] rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]"
-              onClick={() => {
-                setSignInOpen(false);
-                window.location.href = "/signin";
-              }}
+            <Link
+              href="/auth/sign-in"
+              className="text-sm font-medium text-[#71C4FF] hover:underline"
+              onClick={() => setSignInOpen(false)}
             >
-              Sign in
-            </Button>
+              Go to sign-in page
+            </Link>
           </div>
         </DialogContent>
       </Dialog>

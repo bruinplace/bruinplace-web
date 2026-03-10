@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import SearchHeader from "@/components/SearchHeader";
 import { ListingCard } from "@/components/listings/ListingCard";
 import {
@@ -10,12 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SearchFilters } from "@/components/search/FiltersDialog";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type SortKey = "price_desc" | "price_asc" | "recent_desc" | "recent_asc";
 type ViewMode = "unit" | "building";
 
-type Listing = {
+type ListingCardModel = {
   id: string;
   priceLabel: string;
   beds: number;
@@ -28,47 +30,154 @@ type Listing = {
   createdAt: number;
 };
 
+type ApiListing = {
+  id: string;
+  property_id: string;
+  title: string;
+  monthly_rent: number;
+  square_feet: number | null;
+  unit_type: string;
+  created_at: string;
+};
+
+type ApiListingListResponse = {
+  items: ApiListing[];
+  total: number;
+};
+
+type ApiProperty = {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+};
+
+type ApiPropertyListResponse = {
+  items: ApiProperty[];
+  total: number;
+};
+
 function parseMonthlyPrice(priceLabel: string) {
   const match = priceLabel.match(/\$([\d,]+)/);
   if (!match) return 0;
   return Number(match[1].replace(/,/g, ""));
 }
 
+function unitTypeToBeds(unitType: string): number {
+  switch (unitType) {
+    case "studio":
+      return 0;
+    case "1b1b":
+      return 1;
+    case "2b2b":
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+function unitTypeToBaths(unitType: string): number {
+  switch (unitType) {
+    case "2b2b":
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+function buildPath(
+  base: string,
+  params: Record<string, string | number | undefined>,
+) {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === "") continue;
+    qs.set(k, String(v));
+  }
+  const query = qs.toString();
+  return query ? `${base}?${query}` : base;
+}
+
 export default function SearchPage() {
-  const [sort, _setSort] = React.useState<SortKey>("recent_desc");
+  const [sort] = React.useState<SortKey>("recent_desc");
   const [query, setQuery] = React.useState("");
-  const [_filters, setFilters] = React.useState<SearchFilters | null>(null);
+  const [filters, setFilters] = React.useState<SearchFilters | null>(null);
   const [view, setView] = React.useState<ViewMode>("unit");
 
-  const listings: Listing[] = React.useMemo(
+  const listingsPath = React.useMemo(
     () =>
-      Array.from({ length: 12 }).map((_, i) => ({
-        id: String(i + 1),
-        priceLabel: "$1,300 per month",
-        beds: 4,
-        baths: 4,
-        sqft: 1238,
-        address: "330 De Neve Dr, Los Angeles, CA 90024",
-        rating: 4.7,
-        reviewsCount: 17,
-        images: [],
-        // eslint-disable-next-line
-        createdAt: Date.now() - i * 1000 * 60 * 60,
-      })),
-    [],
+      buildPath("/listings", {
+        search: query || undefined,
+        min_rent: filters?.priceMin,
+        max_rent: filters?.priceMax,
+        limit: 50,
+      }),
+    [filters?.priceMax, filters?.priceMin, query],
+  );
+
+  const propertiesPath = React.useMemo(
+    () =>
+      buildPath("/properties", {
+        q: query || undefined,
+        limit: 100,
+      }),
+    [query],
+  );
+
+  const listingsQuery = useQuery({
+    queryKey: ["search_listings", listingsPath],
+    queryFn: () => api.get<ApiListingListResponse>(listingsPath),
+  });
+
+  const propertiesQuery = useQuery({
+    queryKey: ["search_properties", propertiesPath],
+    queryFn: () => api.get<ApiPropertyListResponse>(propertiesPath),
+  });
+
+  const propertyById = React.useMemo(
+    () =>
+      new Map(
+        (propertiesQuery.data?.items ?? []).map((p) => [p.id, p] as const),
+      ),
+    [propertiesQuery.data?.items],
+  );
+
+  const listings: ListingCardModel[] = React.useMemo(
+    () =>
+      (listingsQuery.data?.items ?? []).map((item) => {
+        const property = propertyById.get(item.property_id);
+        const address = property
+          ? `${property.address}, ${property.city}, ${property.state} ${property.postal_code}`
+          : "Address unavailable";
+        return {
+          id: item.id,
+          priceLabel: `$${item.monthly_rent.toLocaleString()} per month`,
+          beds: unitTypeToBeds(item.unit_type),
+          baths: unitTypeToBaths(item.unit_type),
+          sqft: item.square_feet ?? 0,
+          address,
+          rating: 0,
+          reviewsCount: 0,
+          images: [],
+          createdAt: Date.parse(item.created_at) || 0,
+        };
+      }),
+    [listingsQuery.data?.items, propertyById],
   );
 
   const buildings: Building[] = React.useMemo(
     () =>
-      Array.from({ length: 12 }).map((_, i) => ({
-        id: String(i + 1),
-        name: `Building ${i + 1}`,
-        address: "330 De Neve Dr, Los Angeles, CA 90024",
-        rating: 4.7,
-        reviewsCount: 17,
+      (propertiesQuery.data?.items ?? []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        address: `${item.address}, ${item.city}, ${item.state} ${item.postal_code}`,
+        rating: 0,
+        reviewsCount: 0,
         images: [],
       })),
-    [],
+    [propertiesQuery.data?.items],
   );
 
   const sorted = React.useMemo(() => {
@@ -97,6 +206,16 @@ export default function SearchPage() {
     }
   }, [listings, sort]);
 
+  const totalHomes =
+    view === "unit"
+      ? (listingsQuery.data?.total ?? 0)
+      : (propertiesQuery.data?.total ?? 0);
+
+  const isLoading =
+    view === "unit" ? listingsQuery.isLoading : propertiesQuery.isLoading;
+  const isError =
+    view === "unit" ? listingsQuery.isError : propertiesQuery.isError;
+
   return (
     <div className="min-h-dvh bg-background">
       {/* New header for this page */}
@@ -113,7 +232,7 @@ export default function SearchPage() {
             <div className="h-[calc(100dvh-170px)] overflow-y-auto pr-1">
               {/* FULL-WIDTH HEADER */}
               <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-lg font-semibold">Over 100 homes</h1>
+                <h1 className="text-lg font-semibold">{totalHomes} homes</h1>
 
                 <div className="inline-flex rounded-full border border-[#71C4FF] bg-white p-1">
                   <button
@@ -146,21 +265,49 @@ export default function SearchPage() {
 
               <div className="mx-auto max-w-[860px]">
                 <div className="grid gap-6 justify-center sm:grid-cols-[repeat(2,minmax(0,360px))]">
-                  {view === "unit"
-                    ? sorted.map((l) => (
-                        <ListingCard
-                          key={l.id}
-                          listing={l}
-                          className="w-full"
-                        />
-                      ))
-                    : buildings.map((b) => (
-                        <BuildingCard
-                          key={b.id}
-                          building={b}
-                          className="w-full"
-                        />
-                      ))}
+                  {isLoading && (
+                    <div className="rounded-xl border p-4 text-sm text-zinc-600">
+                      Loading results...
+                    </div>
+                  )}
+                  {isError && (
+                    <div className="rounded-xl border p-4 text-sm text-red-600">
+                      Failed to load search results.
+                    </div>
+                  )}
+                  {!isLoading &&
+                    !isError &&
+                    view === "unit" &&
+                    sorted.length === 0 && (
+                      <div className="rounded-xl border p-4 text-sm text-zinc-600">
+                        No listings found.
+                      </div>
+                    )}
+                  {!isLoading &&
+                    !isError &&
+                    view === "building" &&
+                    buildings.length === 0 && (
+                      <div className="rounded-xl border p-4 text-sm text-zinc-600">
+                        No buildings found.
+                      </div>
+                    )}
+                  {!isLoading &&
+                    !isError &&
+                    (view === "unit"
+                      ? sorted.map((l) => (
+                          <ListingCard
+                            key={l.id}
+                            listing={l}
+                            className="w-full"
+                          />
+                        ))
+                      : buildings.map((b) => (
+                          <BuildingCard
+                            key={b.id}
+                            building={b}
+                            className="w-full"
+                          />
+                        )))}
                 </div>
               </div>
             </div>

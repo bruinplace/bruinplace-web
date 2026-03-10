@@ -18,3 +18,7 @@ export function getApiRoot(): string {
   const { baseUrl } = apiEnv;
   return baseUrl;
 }
+
+export function getAuthLoginUrl(): string {
+  return `${getApiRoot()}/auth/login`;
+}

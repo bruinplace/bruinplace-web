@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { type SyntheticEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
+import { api } from "@/lib/api";
+import { QueryKeys } from "@/lib/query-keys";
+import { useSavedListings } from "@/hooks/use-saved-listings";
 
 type ListingType = "sublets" | "leases";
 
@@ -11,33 +15,43 @@ type FavoriteListing = {
   id: string;
   type: ListingType;
   priceText: string;
-  metaLeft: string; // e.g., "4 bd | 3 ba | 1,328 sq ft"
-  metaRight: string; // e.g., "4/7 ★"
+  metaLeft: string;
+  metaRight: string;
   address: string;
 };
 
-const MOCK_FAVORITES: FavoriteListing[] = Array.from({ length: 9 }).map(
-  (_, i) => ({
-    id: `${i + 1}`,
-    type: i % 2 === 0 ? "sublets" : "leases",
-    priceText: "$1,300 per month",
-    metaLeft: "4 bd | 3 ba | 1,328 sq ft",
-    metaRight: "4.7 ★",
-    address: "330 De Neve Dr, Los Angeles, CA 90024",
-  }),
-);
-
 export default function FavoritedListingsPanel() {
   const [activeType, setActiveType] = useState<ListingType>("sublets");
-  const [favorites, setFavorites] = useState<FavoriteListing[]>(MOCK_FAVORITES);
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError } = useSavedListings();
 
-  function unfavoriteListing(id: string) {
-    setFavorites((prev) => prev.filter((listing) => listing.id !== id));
-  }
+  const unsaveMutation = useMutation({
+    mutationFn: async (listingId: string) => {
+      await api.delete(`/me/saved-listings/${listingId}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.SAVED_LISTINGS],
+      });
+    },
+  });
+
+  const allSavedListings = useMemo<FavoriteListing[]>(
+    () =>
+      (data?.items ?? []).map((item) => ({
+        id: item.id,
+        type: "leases",
+        priceText: `$${item.monthly_rent.toLocaleString()} per month`,
+        metaLeft: `${item.unit_type} | ${item.square_feet ?? "-"} sq ft`,
+        metaRight: item.status,
+        address: `Property ID: ${item.property_id}`,
+      })),
+    [data?.items],
+  );
 
   const listings = useMemo(
-    () => favorites.filter((l) => l.type === activeType),
-    [activeType, favorites],
+    () => allSavedListings.filter((l) => l.type === activeType),
+    [activeType, allSavedListings],
   );
 
   return (
@@ -81,19 +95,42 @@ export default function FavoritedListingsPanel() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {listings.map((l) => (
-          <FavoriteCard
-            key={l.id}
-            listing={l}
-            onUnfavorite={unfavoriteListing}
-          />
-        ))}
-
-        {!listings.length && (
-          <div className="rounded-xl border border-dashed bg-white px-5 py-10 text-sm text-zinc-500 sm:col-span-2 lg:col-span-3">
-            No favorited {activeType} yet.
+        {activeType === "sublets" && (
+          <div className="rounded-xl border p-4 text-sm text-zinc-600">
+            Sublets are not connected yet.
           </div>
         )}
+
+        {activeType === "leases" && isLoading && (
+          <div className="rounded-xl border p-4 text-sm text-zinc-600">
+            Loading saved listings...
+          </div>
+        )}
+
+        {activeType === "leases" && isError && (
+          <div className="rounded-xl border p-4 text-sm text-red-600">
+            Could not load saved listings.
+          </div>
+        )}
+
+        {activeType === "leases" &&
+          !isLoading &&
+          !isError &&
+          !listings.length && (
+            <div className="rounded-xl border p-4 text-sm text-zinc-600">
+              No saved listings yet.
+            </div>
+          )}
+
+        {activeType === "leases" &&
+          listings.map((l) => (
+            <FavoriteCard
+              key={l.id}
+              listing={l}
+              onUnfavorite={() => unsaveMutation.mutate(l.id)}
+              pending={unsaveMutation.isPending}
+            />
+          ))}
       </div>
     </div>
   );
@@ -145,6 +182,12 @@ function FavoriteCard({
           onClick={handleUnfavorite}
           className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/90 shadow"
           aria-label="Unfavorite"
+          disabled={pending}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onUnfavorite();
+          }}
         >
           <Heart
             className={cn(
