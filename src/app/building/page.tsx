@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ReviewModal } from "@/components/reviews/AddReviewModal";
 import { ReviewPopupModal } from "@/components/reviews/ReviewPopupModal";
+import { GalleryPopup } from "@/components/listings/GalleryPopup";
 import {
   Heart,
   Share2,
@@ -195,6 +196,8 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
   );
   const [reviewModalOpen, setReviewModalOpen] = React.useState(false);
   const [activeThumbIndex, setActiveThumbIndex] = React.useState(0);
+  const [galleryOpen, setGalleryOpen] = React.useState(false);
+  const [galleryIndex, setGalleryIndex] = React.useState(0);
 
   const openReviewModal = (review: Review) => {
     setSelectedReview(review);
@@ -237,7 +240,13 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
 
                 {i === 3 && (
                   <div className="absolute bottom-3 right-3">
-                    <Button className="rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
+                    <Button
+                      className="rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90"
+                      onClick={() => {
+                        setGalleryIndex(0);
+                        setGalleryOpen(true);
+                      }}
+                    >
                       See all photos
                     </Button>
                   </div>
@@ -577,6 +586,17 @@ export default function BuildingPage({ params }: { params: { id: string } }) {
         onSubmit={async (draft) => {
           console.log("submitted review draft:", draft);
         }}
+      />
+
+      <GalleryPopup
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        images={REVIEW_MODAL_IMAGES.map((src) => ({ src }))}
+        initialIndex={galleryIndex}
+        onIndexChange={setGalleryIndex}
+        priceText={`$${building.priceMin.toLocaleString()}`}
+        metaText={`${building.unitsCount} units | From $${building.priceMin.toLocaleString()} | Up to $${building.priceMax.toLocaleString()}`}
+        addressText={building.address}
       />
     </div>
   );

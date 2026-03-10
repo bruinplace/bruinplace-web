@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { type SyntheticEvent, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
@@ -145,10 +145,32 @@ function FavoriteCard({
   onUnfavorite: () => void;
   pending: boolean;
 }) {
+  const [favorited, setFavorited] = useState(true);
+  const [removing, setRemoving] = useState(false);
+
+  function stopLink(e: SyntheticEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function handleUnfavorite(e: SyntheticEvent) {
+    stopLink(e);
+    if (removing) return;
+
+    // Let the heart visibly toggle off before we animate/remove the card.
+    setFavorited(false);
+    window.setTimeout(() => setRemoving(true), 120);
+    window.setTimeout(() => onUnfavorite(), 260);
+  }
+
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="rounded-xl border bg-white shadow-sm"
+      className={cn(
+        "block rounded-xl border bg-white shadow-sm transition hover:shadow-md",
+        "duration-200",
+        removing && "scale-[0.98] opacity-0 pointer-events-none",
+      )}
     >
       {/* image placeholder */}
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl bg-zinc-100">
@@ -159,16 +181,17 @@ function FavoriteCard({
         {/* heart icon */}
         <button
           type="button"
+          onClick={handleUnfavorite}
           className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/90 shadow"
           aria-label="Unfavorite"
           disabled={pending}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onUnfavorite();
-          }}
         >
-          <Heart className="h-4 w-4 text-zinc-600" />
+          <Heart
+            className={cn(
+              "h-4 w-4 transition-colors duration-150",
+              favorited ? "fill-[#71C4FF] text-[#71C4FF]" : "text-zinc-400",
+            )}
+          />
         </button>
       </div>
 
