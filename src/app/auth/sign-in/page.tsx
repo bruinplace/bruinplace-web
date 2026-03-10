@@ -53,13 +53,10 @@ export default function SignInPage() {
           </div>
 
           <Button
-            type="button"
+            asChild
             className="h-[42px] w-full rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]"
-            onClick={() => {
-              window.location.href = authLoginUrl;
-            }}
           >
-            Continue with UCLA SSO
+            <a href={authLoginUrl}>Continue with UCLA SSO</a>
           </Button>
 
           <div className="flex items-center gap-4">
