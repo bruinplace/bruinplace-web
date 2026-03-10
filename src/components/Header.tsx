@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { api, getAuthLoginUrl } from "@/lib/api";
+import { useAuthMe } from "@/hooks/use-auth-me";
+import { QueryKeys } from "@/lib/query-keys";
 import { User, Plus, UserCog, ExternalLink } from "lucide-react";
 import {
   Dialog,
@@ -11,11 +15,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-// UCLA SSO LOGIN HANDLER
-const UCLA_SSO_URL = "/api/auth/sign-in";
+const UCLA_SSO_URL = getAuthLoginUrl();
 
 export default function Header() {
   const [signInOpen, setSignInOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { data: authUser } = useAuthMe();
+
+  async function handleSignOut() {
+    await api.post("/auth/logout");
+    await queryClient.invalidateQueries({ queryKey: [QueryKeys.AUTH_ME] });
+  }
 
   return (
     <>
@@ -58,21 +68,49 @@ export default function Header() {
           </Link>
         </Button>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setSignInOpen(true)}
-          className="
-            absolute h-[37px] w-[106px] rounded-full
-            bg-white border border-sky-600 text-sky-600
-            hover:bg-white hover:text-sky-600
-            flex items-center justify-center gap-2
-          "
-          style={{ left: "1310px", top: "18px" }}
-        >
-          <User className="h-4 w-4" />
-          <span className="text-sm font-medium">Sign in</span>
-        </Button>
+        {authUser ? (
+          <>
+            <div
+              className="pointer-events-none absolute flex items-center gap-2 text-sm font-medium text-white"
+              style={{ left: "1230px", top: "27px", maxWidth: "150px" }}
+            >
+              <User className="h-4 w-4" />
+              <span className="truncate">
+                {authUser.name || authUser.email}
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSignOut}
+              className="
+                absolute h-[37px] w-[106px] rounded-full
+                bg-white border border-sky-600 text-sky-600
+                hover:bg-white hover:text-sky-600
+                flex items-center justify-center gap-2
+              "
+              style={{ left: "1310px", top: "18px" }}
+            >
+              <span className="text-sm font-medium">Sign out</span>
+            </Button>
+          </>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setSignInOpen(true)}
+            className="
+              absolute h-[37px] w-[106px] rounded-full
+              bg-white border border-sky-600 text-sky-600
+              hover:bg-white hover:text-sky-600
+              flex items-center justify-center gap-2
+            "
+            style={{ left: "1310px", top: "18px" }}
+          >
+            <User className="h-4 w-4" />
+            <span className="text-sm font-medium">Sign in</span>
+          </Button>
+        )}
       </header>
 
       <Dialog open={signInOpen} onOpenChange={setSignInOpen}>
