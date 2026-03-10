@@ -124,6 +124,15 @@ export default function SearchHeader({
                   </span>
                 </div>
                 <Button
+                  asChild
+                  variant="outline"
+                  className="h-[37px] rounded-full bg-white border border-sky-600 text-sky-600 hover:bg-white hover:text-sky-600"
+                >
+                  <Link href="/profile">
+                    <span className="text-sm font-medium">Profile</span>
+                  </Link>
+                </Button>
+                <Button
                   type="button"
                   variant="outline"
                   onClick={handleSignOut}

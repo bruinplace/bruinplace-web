@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuthMe } from "@/hooks/use-auth-me";
+import { useSavedListings } from "@/hooks/use-saved-listings";
 
 type ProfileTab = "favorites" | "reviews" | "settings";
 
@@ -20,29 +24,47 @@ export function ProfilePageShell({
   avatarFallback?: string;
   children: React.ReactNode;
 }) {
+  const { data: authUser } = useAuthMe();
+  const { data: savedListings } = useSavedListings();
+
+  const fallbackFromUser = (() => {
+    const source =
+      (authUser?.name && authUser.name.trim()) || authUser?.email || "";
+    if (!source) return avatarFallback;
+    const parts = source.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return source.slice(0, 2).toUpperCase();
+  })();
+
+  const displayName = authUser?.name || authUser?.email || "Guest";
+  const savedCount = savedListings?.total ?? 0;
+  const resolvedAvatarSrc = avatarSrc || authUser?.profile_picture || undefined;
+
   return (
     <div className="mx-auto w-full max-w-[1039px] px-4 py-8 sm:px-6 sm:py-10 lg:py-14">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
         <Avatar className="h-[96px] w-[96px] border-2 border-white sm:h-[104px] sm:w-[104px]">
-          {avatarSrc ? (
+          {resolvedAvatarSrc ? (
             <AvatarImage
-              src={avatarSrc}
+              src={resolvedAvatarSrc}
               alt="Profile photo"
               className="object-cover"
             />
           ) : null}
           <AvatarFallback className="bg-[#71C4FF] text-[42px] font-normal text-white">
-            {avatarFallback}
+            {fallbackFromUser}
           </AvatarFallback>
         </Avatar>
 
         <div>
           <p className="text-[30px] font-semibold leading-[36px] tracking-[-0.025em] text-black">
-            joe_bruin
+            {displayName}
           </p>
           <div className="mt-2 flex items-center gap-8 text-[20px] font-semibold leading-[28px] tracking-[-0.025em] text-black">
-            <span>3 listings</span>
-            <span>9 reviews</span>
+            <span>{savedCount} saved</span>
+            <span>- reviews</span>
           </div>
         </div>
       </div>
