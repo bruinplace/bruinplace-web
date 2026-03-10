@@ -1,4 +1,5 @@
-import ProfileTopBar from "@/components/profile/ProfileTopBar";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 
 export default function ProfileLayout({
   children,
@@ -6,9 +7,10 @@ export default function ProfileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#F7F7F7]">
-      <ProfileTopBar />
-      <main>{children}</main>
+    <div className="flex min-h-screen flex-col bg-[#F7F7F7]">
+      <Navbar />
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }
