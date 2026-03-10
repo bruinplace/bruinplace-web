@@ -156,16 +156,6 @@ export default function SearchPage() {
           <aside className="hidden lg:block">
             <div className="sticky top-[110px]">
               <div className="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
-                <div className="absolute left-3 top-3 z-10 flex w-[260px] items-center gap-2 rounded-full bg-background/90 p-1 shadow-sm backdrop-blur">
-                  <Input
-                    placeholder="Search"
-                    className="h-8 border-0 bg-transparent px-3 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
-                  <Button size="icon" className="h-8 w-8 rounded-full" aria-label="Search map">
-                    <span className="text-xs font-semibold">Go</span>
-                  </Button>
-                </div>
-
                 <div className="aspect-[4/3] w-full bg-muted">
                   <iframe
                     title="Map"
