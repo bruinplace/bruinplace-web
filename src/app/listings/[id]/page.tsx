@@ -1,191 +1,232 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-
+import { useState, type ComponentType } from "react";
 import {
+  Bike,
+  Bus,
+  Car,
+  ChevronDown,
+  ClipboardList,
+  Flower2,
+  Footprints,
   Heart,
+  Image as ImageIcon,
+  Lock,
+  Mail,
+  MapPin,
+  Megaphone,
+  Pencil,
+  Search,
   Share2,
   Star,
-  Shield,
+  User,
+  WandSparkles,
+  Waves,
+  Wifi,
   Wind,
-  Droplets,
-  Sparkles,
-  Trees,
-  Mail,
-  Phone,
-  BoxIcon,
-  Search,
+  Box,
 } from "lucide-react";
 
-type Listing = {
-  id: string;
-  priceLabel: string;
-  beds: number;
-  baths: number;
-  sqft: number;
-  address: string;
-  rating: number;
-  reviewsCount: number;
+type ReviewTag = {
+  icon: "user" | "flower" | "megaphone" | "clipboard";
+  label: string;
 };
 
 type Review = {
   id: string;
+  initials: string;
   name: string;
-  dateLabel: string;
-  rating: number;
+  livedRange: string;
   text: string;
-  tags: string[];
+  fullText?: string;
+  cardHeight: string;
+  showReadMore?: boolean;
+  avatarColor: string;
+  tags: ReviewTag[];
 };
 
-const MOCK_LISTING: Listing = {
-  id: "1",
-  priceLabel: "$1,450 per month",
-  beds: 3,
-  baths: 2,
-  sqft: 1347,
-  address: "10580 Wilshire Blvd, Los Angeles, CA 90024",
-  rating: 4.4,
-  reviewsCount: 3,
+type RecommendedListing = {
+  id: string;
+  price: string;
+  rating: string;
+  ratingCount: string;
+  beds: number;
+  baths: number;
+  sqft: string;
+  address: string;
 };
 
-const MOCK_REVIEWS: Review[] = [
+const REVIEWS: Review[] = [
   {
-    id: "r1",
+    id: "josie",
+    initials: "JB",
     name: "Josie Bruin",
-    dateLabel: "2024 · 3 months ago",
-    rating: 4,
-    text: "Nice place, commute was easier and there are plenty of food spots nearby. The unit was clean and management was responsive.",
+    livedRange: "2020 - 2019",
+    avatarColor: "#D9297A",
+    cardHeight: "h-[225px]",
+    text: "The location makes my commute way easier and there are plenty of food spots nearby. Noise from the street is minimal once you're inside which surprised me.",
     tags: [
-      "Management 5/5",
-      "Cleanliness 4/5",
-      "Noise level 3/5",
-      "Lease flexibility 4/5",
+      { icon: "user", label: "Management: 5/5" },
+      { icon: "flower", label: "Cleanliness: 4/5" },
+      { icon: "megaphone", label: "Noise Level: 5/5" },
+      { icon: "clipboard", label: "Lease Flexibility: 5/5" },
     ],
   },
   {
-    id: "r2",
+    id: "scotty",
+    initials: "SH",
     name: "Scotty Highlander",
-    dateLabel: "2023 · 1 year ago",
-    rating: 5,
-    text: "Great spot. The pool area is nice and the gym is decent. A bit of street noise during rush hour.",
+    livedRange: "2023 - 2024",
+    avatarColor: "#F59E0B",
+    cardHeight: "h-[254px]",
+    text: "I was impressed with how modern the interior finishes looked compared to other places I toured. The pool area is also a great place to relax on weekends. I also like that the maintenance team follows up after completing requests. Also...",
+    fullText:
+      "I was impressed with how modern the interior finishes looked compared to other places I toured. The pool area is also a great place to relax on weekends. I also like that the maintenance team follows up after completing requests. The leasing team was responsive and made the move-in process straightforward.",
+    showReadMore: true,
     tags: [
-      "Management 4/5",
-      "Cleanliness 5/5",
-      "Noise level 3/5",
-      "Lease flexibility 5/5",
+      { icon: "user", label: "Management: 5/5" },
+      { icon: "flower", label: "Cleanliness: 5/5" },
+      { icon: "megaphone", label: "Noise Level: 5/5" },
+      { icon: "clipboard", label: "Lease Flexibility: 5/5" },
     ],
   },
   {
-    id: "r3",
+    id: "king",
+    initials: "KT",
     name: "King Triton",
-    dateLabel: "2022 · 2 years ago",
-    rating: 4,
-    text: "Solid apartment overall. Maintenance was quick and the location is hard to beat. Parking can be tight.",
+    livedRange: "2020 - 2019",
+    avatarColor: "#34D399",
+    cardHeight: "h-[254px]",
+    text: "I've had a great experience living here so far and would definitely recommend it to others. The leasing team has been incredibly helpful and made the move-in process seamless from start to finish. The apartment itself is beautiful and...",
+    fullText:
+      "I've had a great experience living here so far and would definitely recommend it to others. The leasing team has been incredibly helpful and made the move-in process seamless from start to finish. The apartment itself is beautiful and well-maintained, and the location makes daily life near campus much easier.",
+    showReadMore: true,
     tags: [
-      "Management 4/5",
-      "Cleanliness 4/5",
-      "Noise level 4/5",
-      "Lease flexibility 4/5",
+      { icon: "user", label: "Management: 5/5" },
+      { icon: "flower", label: "Cleanliness: 4/5" },
+      { icon: "megaphone", label: "Noise Level: 5/5" },
+      { icon: "clipboard", label: "Lease Flexibility: 5/5" },
     ],
   },
 ];
 
-/**
- * Lucide-based stars with decimal support (e.g., 4.4).
- * Uses an overlay fill clipped to a percentage width for partial stars.
- */
+const RECOMMENDED_LISTINGS: RecommendedListing[] = [
+  {
+    id: "r1",
+    price: "$2,845 per month",
+    rating: "4.7",
+    ratingCount: "12",
+    beds: 3,
+    baths: 2,
+    sqft: "1,328",
+    address: "1033 Hilgard Ave, Los Angeles, CA 90024",
+  },
+  {
+    id: "r2",
+    price: "$1,342 per month",
+    rating: "3.7",
+    ratingCount: "5",
+    beds: 2,
+    baths: 2,
+    sqft: "1,463",
+    address: "1620 S Bentley Ave, Los Angeles, CA 90025",
+  },
+  {
+    id: "r3",
+    price: "$1,256 per month",
+    rating: "4.9",
+    ratingCount: "6",
+    beds: 1,
+    baths: 1,
+    sqft: "1,288",
+    address: "1040 Glendon Ave, Los Angeles, CA 90024",
+  },
+  {
+    id: "r4",
+    price: "$1,423 per month",
+    rating: "4.7",
+    ratingCount: "13",
+    beds: 2,
+    baths: 1,
+    sqft: "1,625",
+    address: "10700 Wilshire Blvd, Los Angeles, CA 90024",
+  },
+  {
+    id: "r5",
+    price: "$1,899 per month",
+    rating: "4.7",
+    ratingCount: "8",
+    beds: 4,
+    baths: 3,
+    sqft: "1,528",
+    address: "10824 Lindbrook Dr, Los Angeles, CA 90024",
+  },
+  {
+    id: "r6",
+    price: "$1,572 per month",
+    rating: "4.7",
+    ratingCount: "7",
+    beds: 1,
+    baths: 1,
+    sqft: "1,302",
+    address: "10636 Wilshire Blvd, Los Angeles, CA 90024",
+  },
+];
 
-function Stars({ value, size = 22 }: { value: number; size?: number }) {
-  const full = Math.floor(value);
-  const frac = value - full;
+const HIGHLIGHTS = [
+  { icon: Lock, label: "Security" },
+  { icon: Box, label: "Hardwood flooring" },
+  { icon: WandSparkles, label: "Curated art" },
+  { icon: Waves, label: "In-unit washer & dryer" },
+  { icon: Wifi, label: "Internet" },
+  { icon: Wind, label: "AC" },
+];
 
+function PhotoPlaceholder({ className }: { className?: string }) {
   return (
-    <div className="flex items-center gap-1">
-      {Array.from({ length: 5 }).map((_, i) => {
-        const isFull = i < full;
-        const isPartial = i === full && frac > 0;
+    <div
+      className={`h-full w-full bg-gradient-to-br from-[#dfdfdf] to-[#cfcfcf] ${className ?? ""}`}
+    />
+  );
+}
 
-        if (isFull) {
-          return (
-            <Star
-              key={i}
-              className="text-[#F6C24A]"
-              style={{ width: size, height: size }}
-              fill="currentColor"
-            />
-          );
-        }
-
-        if (isPartial) {
-          const pct = Math.round(frac * 100);
-
-          return (
-            <span
-              key={i}
-              className="relative inline-block"
-              style={{ width: size, height: size }}
-            >
-              {/* empty base */}
-              <Star
-                className="text-muted-foreground/40"
-                style={{ width: size, height: size }}
-                fill="none"
-              />
-
-              {/* filled overlay clipped */}
-              <span
-                className="absolute inset-0 overflow-hidden"
-                style={{ width: `${pct}%` }}
-              >
-                <Star
-                  className="text-[#F6C24A]"
-                  style={{ width: size, height: size }}
-                  fill="currentColor"
-                />
-              </span>
-            </span>
-          );
-        }
-
-        return (
-          <Star
-            key={i}
-            className="text-muted-foreground/40"
-            style={{ width: size, height: size }}
-            fill="none"
-          />
-        );
-      })}
+function StarRow({ size = 33 }: { size?: number }) {
+  return (
+    <div className="flex items-center gap-[15.793px]">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Star
+          key={index}
+          className="text-[#F2B94B]"
+          fill={index < 4 ? "currentColor" : "none"}
+          style={{ width: size, height: size }}
+        />
+      ))}
     </div>
   );
 }
 
-function RatingBars() {
+function ReviewBars() {
   const rows = [
-    { label: "5 stars", pct: 0.72 },
-    { label: "4 stars", pct: 0.55 },
-    { label: "3 stars", pct: 0.18 },
-    { label: "2 stars", pct: 0.08 },
-    { label: "1 star", pct: 0.12 },
+    { label: "5 stars", width: 92 },
+    { label: "4 stars", width: 72 },
+    { label: "3 stars", width: 32 },
+    { label: "2 stars", width: 21 },
+    { label: "1 stars", width: 13 },
   ];
+
   return (
-    <div className="space-y-2">
-      {rows.map((r) => (
+    <div className="w-full max-w-[361px] space-y-[21.5px]">
+      {rows.map((row) => (
         <div
-          key={r.label}
-          className="grid grid-cols-[64px_1fr] items-center gap-3"
+          key={row.label}
+          className="grid grid-cols-[53px_1fr] items-center gap-4"
         >
-          <div className="text-xs text-muted-foreground">{r.label}</div>
-          <div className="h-2 rounded-full bg-muted">
+          <p className="text-[14px] leading-6 text-black">{row.label}</p>
+          <div className="h-[19px] rounded-[40px] bg-[#E5E5E5]">
             <div
-              className="h-2 rounded-full bg-[#71C4FF]"
-              style={{ width: `${Math.round(r.pct * 100)}%` }}
+              className="h-[19px] rounded-[40px] bg-[#71C4FF]"
+              style={{ width: `${row.width}%` }}
             />
           </div>
         </div>
@@ -194,433 +235,460 @@ function RatingBars() {
   );
 }
 
-function ImagePlaceholder({ className }: { className?: string }) {
-  return <div className={`h-full w-full bg-muted ${className ?? ""}`} />;
-}
+function ReviewTagChip({ tag }: { tag: ReviewTag }) {
+  const iconClass = "h-[20px] w-[20px] text-[#3EA6FC]";
 
-function RecommendedCard() {
   return (
-    <Card className="rounded-2xl p-3 shadow-lg">
-      <div className="space-y-3">
-        <div className="relative overflow-hidden rounded-xl bg-muted">
-          <div className="aspect-[16/10]">
-            <ImagePlaceholder />
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-background/70 backdrop-blur hover:bg-background/80"
-            aria-label="Save listing"
-          >
-            <Heart className="h-5 w-5" />
-          </Button>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <div className="text-lg font-semibold leading-none">
-              $1,342 per month
-            </div>
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <Star
-                className="h-4 w-4 text-muted-foreground"
-                fill="currentColor"
-              />
-              <span>4.2</span>
-              <span className="text-muted-foreground">(17)</span>
-            </div>
-          </div>
-
-          <div className="space-y-0.5">
-            <div className="text-sm">2 bd | 2 ba | 1,460 sq ft</div>
-            <div className="text-xs text-muted-foreground">
-              10200 Westwood Blvd, Los Angeles, CA 90024
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
+    <span className="inline-flex h-[40px] items-center gap-[10px] rounded-[25px] border border-[#3EA6FC] bg-[rgba(113,196,255,0.1)] px-4 py-2 text-[14px] font-medium leading-6 text-[#3EA6FC]">
+      {tag.icon === "user" ? <User className={iconClass} /> : null}
+      {tag.icon === "flower" ? <Flower2 className={iconClass} /> : null}
+      {tag.icon === "megaphone" ? <Megaphone className={iconClass} /> : null}
+      {tag.icon === "clipboard" ? (
+        <ClipboardList className={iconClass} />
+      ) : null}
+      <span>{tag.label}</span>
+    </span>
   );
 }
 
-/** Optional helper (you weren’t using showContact, but keeping hook since you had it) */
-function useShowAfterScrollPast() {
-  const ref = React.useRef<HTMLDivElement | null>(null);
-  const [show, setShow] = React.useState(false);
-
-  React.useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const obs = new IntersectionObserver(
-      ([entry]) => setShow(!entry.isIntersecting),
-      { threshold: 0 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return { ref, show };
-}
-
-export default function ListingPage({ params }: { params: { id: string } }) {
-  const { id } = params;
-  const listing = { ...MOCK_LISTING, id };
-
-  // If you want to use this later, keep it:
-  const { ref: galleryEndRef } = useShowAfterScrollPast();
-
-  const onSeeMore = () => {};
+function ReviewCard({ review }: { review: Review }) {
+  const canExpand = Boolean(review.showReadMore && review.fullText);
+  const [expanded, setExpanded] = useState(false);
+  const textToRender =
+    canExpand && expanded && review.fullText ? review.fullText : review.text;
 
   return (
-    <div className="min-h-dvh bg-background">
-      <main className="mx-auto max-w-[1300px] px-6 py-8">
-        {/* FULL-WIDTH GALLERY */}
-        <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
-          {/* Left: hero */}
-          <div className="relative overflow-hidden rounded-2xl bg-muted">
-            <div className="aspect-[16/9] max-h-[520px] w-full">
-              <ImagePlaceholder />
-            </div>
+    <article
+      className={`w-full rounded-[25px] bg-white p-[30px] shadow-[0_4px_8px_rgba(0,0,0,0.25)] ${expanded ? "h-auto" : review.cardHeight}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-[15px]">
+          <div
+            className="grid h-[57px] w-[57px] place-items-center rounded-full text-[22.8px] leading-[39.9px] text-white"
+            style={{ backgroundColor: review.avatarColor }}
+          >
+            {review.initials}
           </div>
-
-          {/* Right: 2x2 tiles */}
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="relative overflow-hidden rounded-2xl bg-muted"
-              >
-                <div className="aspect-[16/9]">
-                  <ImagePlaceholder />
-                </div>
-
-                {i === 3 && (
-                  <div className="absolute bottom-3 right-3">
-                    <Button className="rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
-                      See all photos
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
+          <div>
+            <p className="text-[20px] font-semibold leading-7 tracking-[-0.1px] text-black">
+              {review.name}
+            </p>
+            <p className="text-[14px] leading-6 text-[#919191]">
+              {review.livedRange}
+            </p>
           </div>
         </div>
 
-        {/* Sentinel if you decide to use it */}
-        <div ref={galleryEndRef} />
+        <StarRow size={33} />
+      </div>
 
-        {/* PAGE CONTENT */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
-          {/* LEFT */}
-          <section className="min-w-0">
-            {/* price / rating / actions */}
-            <div className="mt-6">
-              {/* Row 1: stars + rating */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Stars value={listing.rating} size={32} />
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-xl font-semibold">
-                    {listing.rating.toFixed(1)}
-                  </div>
-                  <div className="text-xl text-muted-foreground">
-                    ({listing.reviewsCount})
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 2: price + actions */}
-              <div className="mt-3 flex items-center justify-between gap-4">
-                <div className="text-4xl font-semibold tracking-tight">
-                  {listing.priceLabel}
-                </div>
-
-                <div className="flex items-center gap-5">
-                  <button
-                    type="button"
-                    aria-label="Save"
-                    className="text-[#71C4FF] hover:opacity-80 transition"
-                  >
-                    <Heart className="h-9 w-9" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Share"
-                    className="text-[#71C4FF] hover:opacity-80 transition"
-                  >
-                    <Share2 className="h-9 w-9" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Row 3: beds/baths/sqft with dividers */}
-              <div className="mt-5 flex flex-wrap items-center gap-6 text-2xl">
-                <span>
-                  <span className="font-semibold">{listing.beds}</span> bd
-                </span>
-                <span className="text-muted-foreground">|</span>
-                <span>
-                  <span className="font-semibold">{listing.baths}</span> ba
-                </span>
-                <span className="text-muted-foreground">|</span>
-                <span>
-                  <span className="font-semibold">
-                    {listing.sqft.toLocaleString()}
-                  </span>{" "}
-                  sq ft
-                </span>
-              </div>
-
-              {/* Row 4: address */}
-              <div className="mt-6 text-2xl text-muted-foreground">
-                {listing.address}
-              </div>
-            </div>
-
-            {/* highlights (plain) */}
-            <div className="mt-10">
-              <div className="h-px w-full bg-border" />
-
-              <h2 className="mt-10 text-3xl font-semibold tracking-tight">
-                Highlights
-              </h2>
-
-              <div className="mt-10 grid gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-3">
-                <HighlightPlain
-                  icon={<Shield className="h-10 w-10" />}
-                  label="Security"
-                />
-                <HighlightPlain
-                  icon={<Trees className="h-10 w-10" />}
-                  label="Hardwood flooring"
-                />
-                <HighlightPlain
-                  icon={<Sparkles className="h-10 w-10" />}
-                  label="Curated art"
-                />
-                <HighlightPlain
-                  icon={<Droplets className="h-10 w-10" />}
-                  label="In-unit washer & dryer"
-                />
-                <HighlightPlain
-                  icon={<BoxIcon className="h-10 w-10" />}
-                  label="Internet"
-                />
-                <HighlightPlain
-                  icon={<Wind className="h-10 w-10" />}
-                  label="AC"
-                />
-              </div>
-
-              <p className="mt-10 text-lg leading-8 text-muted-foreground">
-                Placeholder description text. Lorem ipsum dolor sit amet,
-                consectetur adipiscing elit. Donec
-              </p>
-
-              <div className="mt-12 h-px w-full bg-border" />
-            </div>
-
-            {/* location */}
-            <div className="mt-10">
-              <h2 className="text-lg font-semibold">Location</h2>
-              <div className="mt-4 overflow-hidden rounded-2xl border bg-card">
-                <div className="aspect-[16/7] w-full bg-muted">
-                  <iframe
-                    title="Map"
-                    className="h-full w-full"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src="https://www.google.com/maps?q=UCLA&z=14&output=embed"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 p-4">
-                  <Badge variant="secondary" className="rounded-full">
-                    Distance from Bruin Bear
-                  </Badge>
-                  <Badge variant="secondary" className="rounded-full">
-                    12 min walk
-                  </Badge>
-                  <Badge variant="secondary" className="rounded-full">
-                    5 min drive
-                  </Badge>
-                  <Badge variant="secondary" className="rounded-full">
-                    7 min scooter
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* reviews */}
-            <div className="mt-10">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">
-                  Reviews ({MOCK_REVIEWS.length})
-                </h2>
-                <div className="flex items-center gap-2">
-                  <Button variant="secondary" className="rounded-full">
-                    Add review
-                  </Button>
-                  <Button variant="secondary" className="rounded-full">
-                    Sort by
-                  </Button>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
-                <div className="space-y-4">
-                  {MOCK_REVIEWS.map((r) => (
-                    <Card key={r.id} className="rounded-2xl p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="font-semibold">{r.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {r.dateLabel}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Stars value={r.rating} size={22} />
-                          <span className="ml-2 text-sm font-medium">
-                            {r.rating.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                        {r.text}
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {r.tags.map((t) => (
-                          <Badge
-                            key={t}
-                            variant="secondary"
-                            className="rounded-full"
-                          >
-                            {t}
-                          </Badge>
-                        ))}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-                <Card className="h-fit rounded-2xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl font-semibold">
-                      {listing.rating.toFixed(1)}
-                    </div>
-                    <div>
-                      <Stars value={listing.rating} />
-                      <div className="text-xs text-muted-foreground">
-                        {listing.reviewsCount} reviews
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <RatingBars />
-                  </div>
-                  <div className="mt-4">
-                    <Input
-                      placeholder="Search reviews…"
-                      className="rounded-full"
-                    />
-                  </div>
-                </Card>
-              </div>
-            </div>
-          </section>
-
-          {/* RIGHT */}
-          <aside className="block">
-            <div className="sticky top-6">
-              <Card className="rounded-2xl p-5">
-                <div className="text-sm font-semibold">Contact this lister</div>
-
-                <div className="mt-4 flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-semibold">
-                    JB
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">Joe Bruin</div>
-                    <div className="text-xs text-muted-foreground">
-                      Verified
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 space-y-3 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    joe.bruin@email.com
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    (323) 555-0199
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-3">
-                  <Button className="w-full rounded-2xl bg-[#71C4FF] text-white hover:bg-[#71C4FF]/90">
-                    Message
-                  </Button>
-                  <Button variant="secondary" className="w-full rounded-2xl">
-                    Request tour
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </aside>
-        </div>
-      </main>
-
-      {/* RECOMMENDED LISTINGS – FULL WIDTH SECTION */}
-      <section className="mt-24 w-full bg-[#EAF6FF] py-16">
-        <div className="mx-auto max-w-[1300px] px-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">Recommended listings</h2>
-
-            <Button
-              asChild
-              variant="secondary"
-              className="h-8 rounded-full bg-[#3EA6FC] px-5 text-white hover:bg-[#3EA6FC]/80"
+      <div className="mt-[10px] space-y-[10px]">
+        <div>
+          <p className="text-[14px] leading-6 text-black">{textToRender}</p>
+          {canExpand ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((prev) => !prev)}
+              className="mt-[5px] inline-flex items-center gap-[5px] text-[14px] font-bold leading-6 text-[#3EA6FC] underline"
             >
-              <Link
-                href="/search"
-                onClick={onSeeMore}
-                className="inline-flex items-center gap-2"
-              >
-                <Search className="h-4 w-4" />
-                <span>See more</span>
-              </Link>
-            </Button>
-          </div>
+              {expanded ? "Read less" : "Read more"}
+              <ChevronDown
+                className={`h-6 w-6 transition-transform ${expanded ? "rotate-180" : ""}`}
+              />
+            </button>
+          ) : null}
+        </div>
 
-          <div className="mt-8 grid gap-8 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <RecommendedCard key={i} />
-            ))}
+        <div className="flex flex-wrap gap-[10px]">
+          {review.tags.map((tag) => (
+            <ReviewTagChip key={tag.label} tag={tag} />
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function RecommendedCard({ listing }: { listing: RecommendedListing }) {
+  return (
+    <article className="h-[400px] rounded-[25px] bg-white p-5 shadow-[0_4px_8px_rgba(0,0,0,0.25)]">
+      <div className="relative h-[227px] overflow-hidden rounded-[25px] bg-[#DADADA]">
+        <PhotoPlaceholder />
+        <button
+          type="button"
+          aria-label="Save listing"
+          className="absolute right-[15px] top-[15.65px] inline-flex h-[35.35px] w-[35.35px] items-center justify-center rounded-full border border-white/70 bg-black/10 text-white"
+        >
+          <Heart className="h-6 w-6" />
+        </button>
+      </div>
+
+      <div className="mt-[25px] space-y-[5px]">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[24px] font-semibold leading-7 text-[#0F172A]">
+            {listing.price}
+          </p>
+
+          <div className="flex items-center gap-2">
+            <Star className="h-5 w-5 fill-[#BABABA] text-[#BABABA]" />
+            <p className="text-[14px] font-bold leading-6 text-black">
+              {listing.rating}
+            </p>
+            <p className="text-[14px] font-medium leading-6 text-[#BABABA]">
+              ({listing.ratingCount})
+            </p>
           </div>
         </div>
-      </section>
+
+        <div className="flex items-center gap-[10px] text-[14px] leading-6 text-black">
+          <span>
+            <span className="font-bold">{listing.beds}</span> bd
+          </span>
+          <span className="text-[#919191]">|</span>
+          <span>
+            <span className="font-bold">{listing.baths}</span> ba
+          </span>
+          <span className="text-[#919191]">|</span>
+          <span>
+            <span className="font-bold">{listing.sqft}</span> sq ft
+          </span>
+        </div>
+
+        <p className="text-[16px] leading-6 text-[#919191]">
+          {listing.address}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function AmenityItem({
+  icon: Icon,
+  label,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-[10px]">
+      <Icon className="h-8 w-8 text-[#71C4FF]" />
+      <p className="text-[20px] leading-7 tracking-[-0.1px] text-black">
+        {label}
+      </p>
     </div>
   );
 }
 
-function HighlightPlain({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode;
-  label: string;
-}) {
+function ContactCard() {
   return (
-    <div className="flex items-center gap-2">
-      <div className="text-[#71C4FF]">{icon}</div>
-      <div className="text-xl font-medium">{label}</div>
+    <aside className="rounded-[25px] bg-white p-[30px] shadow-[0_4px_15px_rgba(0,0,0,0.25)]">
+      <div className="h-px w-full bg-[#D4D4D4]" />
+
+      <div className="mt-10 space-y-[30px]">
+        <h3 className="text-center text-[24px] font-semibold leading-8 tracking-[-0.144px] text-black">
+          Contact this lister
+        </h3>
+
+        <div className="flex items-center justify-center gap-[15px]">
+          <div className="grid h-[67px] w-[67px] place-items-center rounded-full bg-[#71C4FF] text-[37px] leading-[46.9px] text-white">
+            JB
+          </div>
+          <p className="text-[20px] font-semibold leading-7 tracking-[-0.1px] text-black">
+            Joe Bruin
+          </p>
+        </div>
+
+        <div className="space-y-[25px]">
+          <div className="flex items-start gap-[15px]">
+            <Mail className="h-6 w-6 text-[#71C4FF]" />
+            <div>
+              <p className="text-[14px] font-bold leading-6 text-black">
+                Email
+              </p>
+              <p className="text-[14px] leading-6 text-black">
+                joebruin33@gmail.com
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-[15px]">
+            <svg
+              className="h-6 w-6 text-[#71C4FF]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            <div>
+              <p className="text-[14px] font-bold leading-6 text-black">
+                Phone
+              </p>
+              <p className="text-[14px] leading-6 text-black">(123) 456-789</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-10 h-px w-full bg-[#D4D4D4]" />
+    </aside>
+  );
+}
+
+export default function ListingPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  const listingId = id;
+
+  return (
+    <div className="w-full bg-[#F5F5F5]">
+      <section className="mx-auto w-full max-w-[1441px] px-4 pb-[82px] pt-[60px] sm:px-8 xl:px-[120px]">
+        <div className="space-y-[50px]">
+          <div className="grid gap-[25px] lg:grid-cols-[595px_minmax(0,1fr)]">
+            <div className="h-[475px] overflow-hidden rounded-bl-[25px] rounded-tl-[25px] bg-[#DADADA]">
+              <PhotoPlaceholder />
+            </div>
+
+            <div className="grid h-[475px] grid-cols-2 gap-[25px]">
+              <div className="overflow-hidden bg-[#DADADA]">
+                <PhotoPlaceholder />
+              </div>
+              <div className="overflow-hidden rounded-tr-[25px] bg-[#DADADA]">
+                <PhotoPlaceholder />
+              </div>
+              <div className="overflow-hidden bg-[#DADADA]">
+                <PhotoPlaceholder />
+              </div>
+
+              <div className="relative overflow-hidden rounded-br-[25px] bg-[#DADADA]">
+                <PhotoPlaceholder />
+                <button
+                  type="button"
+                  className="absolute bottom-5 right-3 inline-flex h-10 items-center gap-[10px] rounded-[25px] bg-[#3EA6FC] px-4 py-2 text-[14px] font-medium leading-6 text-white"
+                >
+                  <ImageIcon className="h-6 w-6" />
+                  <span>See all photos</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-[30px] lg:grid-cols-[842px_299px] lg:gap-[60px]">
+            <div className="space-y-[50px]">
+              <section className="space-y-[15px]">
+                <button
+                  type="button"
+                  className="flex items-end gap-[15px]"
+                  aria-label="Jump to reviews"
+                >
+                  <StarRow size={33} />
+                  <p className="text-[20px] font-semibold leading-7 tracking-[-0.1px] text-black">
+                    4.4 <span className="font-normal text-[#BABABA]">(3)</span>
+                  </p>
+                </button>
+
+                <div className="flex items-center gap-5">
+                  <p className="text-[30px] font-semibold leading-9 tracking-[-0.225px] text-black">
+                    $1,450 per month
+                  </p>
+                  <div className="flex items-center gap-2 text-[#71C4FF]">
+                    <button type="button" aria-label="Save listing">
+                      <Heart className="h-[34.56px] w-[34.56px]" />
+                    </button>
+                    <button type="button" aria-label="Share listing">
+                      <Share2 className="h-9 w-9" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center text-[20px] leading-7 tracking-[-0.1px] text-black">
+                  <p>
+                    3 <span className="font-normal">bd</span>
+                  </p>
+                  <span className="w-[43px] text-center text-[#BABABA]">|</span>
+                  <p>
+                    2 <span className="font-normal">ba</span>
+                  </p>
+                  <span className="w-[43px] text-center text-[#BABABA]">|</span>
+                  <p>
+                    1,347 <span className="font-normal">sq ft</span>
+                  </p>
+                </div>
+
+                <p className="text-[20px] leading-7 tracking-[-0.1px] text-[#919191]">
+                  10599 Wilshire Blvd, Los Angeles, CA 90024
+                </p>
+              </section>
+
+              <div className="h-px w-full bg-[#D4D4D4]" />
+
+              <section className="space-y-[25px]">
+                <h2 className="text-[30px] font-semibold leading-9 tracking-[-0.225px] text-black">
+                  Highlights
+                </h2>
+
+                <div className="grid gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
+                  {HIGHLIGHTS.map((highlight) => (
+                    <AmenityItem
+                      key={highlight.label}
+                      icon={highlight.icon}
+                      label={highlight.label}
+                    />
+                  ))}
+                </div>
+
+                <p className="text-[14px] leading-6 text-black">
+                  Wilshire Margot introduces you to a life of luxury,
+                  relaxation, and comfort. Explore resort-inspired amenities,
+                  sweeping city views, and modern interiors in our Wilshire
+                  Blvd. apartment community. Disclaimer: Some images may be
+                  digitally altered or virtually staged. Original, unaltered
+                  photos are available on this property&apos;s website. Our
+                  apartments capture the essence of everything you love about
+                  Los Angeles, from its vibrant ambiance to its everyday urban
+                  conveniences.
+                </p>
+              </section>
+
+              <div className="h-px w-full bg-[#D4D4D4]" />
+
+              <section className="space-y-5">
+                <h2 className="text-[30px] font-semibold leading-9 tracking-[-0.225px] text-black">
+                  Location
+                </h2>
+
+                <div className="h-[350px] overflow-hidden rounded-[25px] bg-[#DADADA]">
+                  <PhotoPlaceholder />
+                </div>
+
+                <div className="space-y-[15px]">
+                  <div className="flex items-center gap-[10px]">
+                    <MapPin className="h-[38px] w-[38px] text-[#3EA6FC]" />
+                    <p className="text-[32px] font-semibold leading-[38px] tracking-[-0.16px] text-black">
+                      Distance from Bruin Bear
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-5">
+                    <span className="inline-flex h-10 items-center gap-[10px] rounded-[25px] border border-[#3EA6FC] bg-[rgba(113,196,255,0.1)] px-4 py-2 text-[14px] font-medium leading-6 text-[#3EA6FC]">
+                      <Footprints className="h-6 w-6" />
+                      12 min
+                    </span>
+                    <span className="inline-flex h-10 items-center gap-[10px] rounded-[25px] border border-[#3EA6FC] bg-[rgba(113,196,255,0.1)] px-4 py-2 text-[14px] font-medium leading-6 text-[#3EA6FC]">
+                      <Bike className="h-6 w-6" />8 min
+                    </span>
+                    <span className="inline-flex h-10 items-center gap-[10px] rounded-[25px] border border-[#3EA6FC] bg-[rgba(113,196,255,0.1)] px-4 py-2 text-[14px] font-medium leading-6 text-[#3EA6FC]">
+                      <Car className="h-6 w-6" />7 min
+                    </span>
+                    <span className="inline-flex h-10 items-center gap-[10px] rounded-[25px] border border-[#3EA6FC] bg-[rgba(113,196,255,0.1)] px-4 py-2 text-[14px] font-medium leading-6 text-[#3EA6FC]">
+                      <Bus className="h-6 w-6" />
+                      10 min
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <div className="h-px w-full bg-[#D4D4D4]" />
+
+              <section className="space-y-[45px]" id="reviews">
+                <div className="space-y-[25px]">
+                  <div className="grid gap-6 lg:grid-cols-[367px_430px] lg:items-start lg:justify-between">
+                    <div className="space-y-[30px]">
+                      <div className="flex items-center justify-between gap-4">
+                        <h2 className="text-[40px] font-semibold leading-[normal] tracking-[-0.2px] text-black">
+                          Reviews{" "}
+                          <span className="font-normal text-[#BABABA]">
+                            (3)
+                          </span>
+                        </h2>
+                      </div>
+
+                      <div className="space-y-[15px]">
+                        <StarRow size={43} />
+                        <p className="text-[28px] leading-7 tracking-[-0.1px] text-black">
+                          4.4 out of 5 stars
+                        </p>
+                      </div>
+                    </div>
+
+                    <ReviewBars />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex flex-wrap items-center gap-[15px]">
+                      <label className="relative block h-10 w-[251px]">
+                        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#BABABA]" />
+                        <input
+                          type="text"
+                          placeholder="Search reviews..."
+                          className="h-full w-full rounded-[25px] border border-[#919191] bg-transparent pl-11 pr-4 text-[20px] leading-6 text-black outline-none placeholder:text-[#BABABA]"
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        className="inline-flex h-10 w-[105px] items-center gap-[5px] rounded-[25px] border border-[#919191] bg-transparent px-4 py-2 text-[14px] leading-6 text-black"
+                      >
+                        Sort by
+                        <ChevronDown className="h-6 w-6 text-[#919191]" />
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="inline-flex h-10 w-[142px] items-center gap-[10px] rounded-[25px] bg-[#3EA6FC] px-4 py-2 text-[14px] font-medium leading-6 text-white"
+                    >
+                      <Pencil className="h-6 w-6" />
+                      Add review
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-[45px]">
+                  {REVIEWS.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <div className="lg:relative">
+              <div className="lg:sticky lg:top-[120px]">
+                <ContactCard />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[rgba(180,223,255,0.3)] py-[49px]">
+        <div className="mx-auto w-full max-w-[1441px] px-4 sm:px-8 xl:px-[120px]">
+          <div className="space-y-[45px]">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="text-[26px] font-bold leading-[normal] text-black">
+                Recommended listings
+              </h2>
+
+              <Link
+                href={`/search?listing=${listingId}`}
+                className="inline-flex h-10 items-center gap-[10px] rounded-[25px] bg-[#3EA6FC] px-4 py-2 text-[14px] font-medium leading-6 text-white"
+              >
+                <Search className="h-6 w-6" />
+                See more
+              </Link>
+            </div>
+
+            <div className="grid gap-[35px] md:grid-cols-2 xl:grid-cols-3">
+              {RECOMMENDED_LISTINGS.map((listing) => (
+                <RecommendedCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
