@@ -19,60 +19,52 @@ export default function Header() {
 
   return (
     <>
-      <header className="relative h-[74px] w-[1441px] bg-[#71C4FF]">
-        <Link
-          href="/"
-          className="absolute text-xl font-semibold text-white"
-          style={{ left: "31px", top: "23px", width: "112px", height: "27px" }}
-        >
-          BruinPlace
-        </Link>
-
-        <Button
-          asChild
-          className="
-            absolute h-[37px] w-[130px] rounded-full
-            bg-white text-sky-600 hover:bg-white hover:text-sky-600
-            flex items-center justify-center gap-2
-          "
-          style={{ left: "1020px", top: "18px" }}
-        >
-          <Link href="/sublets/new">
-            <Plus className="h-4 w-4" />
-            <span className="text-sm font-medium">Add sublet</span>
+      <header className="w-full bg-[#71C4FF]">
+        <div className="mx-auto flex min-h-[74px] max-w-[1440px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+          <Link href="/" className="shrink-0 text-xl font-semibold text-white">
+            BruinPlace
           </Link>
-        </Button>
 
-        <Button
-          asChild
-          className="
-            absolute h-[37px] w-[130px] rounded-full
-            bg-white text-sky-600 hover:bg-white hover:text-sky-600
-            flex items-center justify-center gap-2
-          "
-          style={{ left: "1160px", top: "18px" }}
-        >
-          <Link href="/listings/new">
-            <Plus className="h-4 w-4" />
-            <span className="text-sm font-medium">Add listing</span>
-          </Link>
-        </Button>
+          <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto">
+            <Button
+              asChild
+              className="h-[37px] min-w-[130px] rounded-full bg-white text-sky-600 hover:bg-white hover:text-sky-600"
+            >
+              <Link
+                href="/sublets/new"
+                className="flex items-center justify-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-sm font-medium">Add sublet</span>
+              </Link>
+            </Button>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setSignInOpen(true)}
-          className="
-            absolute h-[37px] w-[106px] rounded-full
-            bg-white border border-sky-600 text-sky-600
-            hover:bg-white hover:text-sky-600
-            flex items-center justify-center gap-2
-          "
-          style={{ left: "1310px", top: "18px" }}
-        >
-          <User className="h-4 w-4" />
-          <span className="text-sm font-medium">Sign in</span>
-        </Button>
+            <Button
+              asChild
+              className="h-[37px] min-w-[130px] rounded-full bg-white text-sky-600 hover:bg-white hover:text-sky-600"
+            >
+              <Link
+                href="/listings/new"
+                className="flex items-center justify-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-sm font-medium">Add listing</span>
+              </Link>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSignInOpen(true)}
+              className="h-[37px] min-w-[106px] rounded-full border border-sky-600 bg-white text-sky-600 hover:bg-white hover:text-sky-600"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <User className="h-4 w-4" />
+                <span className="text-sm font-medium">Sign in</span>
+              </span>
+            </Button>
+          </div>
+        </div>
       </header>
 
       <Dialog open={signInOpen} onOpenChange={setSignInOpen}>
