@@ -20,6 +20,7 @@ async function request<T = unknown>(
   const { body, ...rest } = init ?? {};
   const res = await fetch(url, {
     ...rest,
+    credentials: rest.credentials ?? "include",
     headers: { ...defaultHeaders, ...rest.headers },
     body: body != null ? JSON.stringify(body) : undefined,
   });

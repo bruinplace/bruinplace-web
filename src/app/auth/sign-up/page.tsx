@@ -78,7 +78,7 @@ export default function SignUpPage() {
 
           <div className="text-center text-sm text-zinc-700">
             Already have an account?{" "}
-            <Link href="/sign-in" className="font-medium text-[#71C4FF]">
+            <Link href="/auth/sign-in" className="font-medium text-[#71C4FF]">
               Sign in
             </Link>
           </div>

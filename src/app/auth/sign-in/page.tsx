@@ -2,9 +2,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getAuthLoginUrl } from "@/lib/api";
 import { UserCog } from "lucide-react";
 
 export default function SignInPage() {
+  const authLoginUrl = getAuthLoginUrl();
+
   return (
     <div className="min-h-[calc(100vh-74px)] w-full bg-white flex items-center justify-center px-4 py-10">
       <div
@@ -50,10 +53,13 @@ export default function SignInPage() {
           </div>
 
           <Button
-            type="submit"
+            type="button"
             className="h-[42px] w-full rounded-full bg-[#71C4FF] text-white hover:bg-[#71C4FF]"
+            onClick={() => {
+              window.location.href = authLoginUrl;
+            }}
           >
-            Sign in
+            Continue with UCLA SSO
           </Button>
 
           <div className="flex items-center gap-4">
@@ -64,7 +70,7 @@ export default function SignInPage() {
 
           <div className="text-center text-sm text-zinc-700">
             Don’t have an account?{" "}
-            <Link href="/sign-up" className="font-medium text-[#71C4FF]">
+            <Link href="/auth/sign-up" className="font-medium text-[#71C4FF]">
               Create account
             </Link>
           </div>
