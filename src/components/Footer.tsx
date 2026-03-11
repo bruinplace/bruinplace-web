@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Linkedin, Mail } from "lucide-react";
 
@@ -53,7 +54,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pointer-events-none absolute bottom-[25.8px] left-[787.5px] hidden h-[258.39px] w-[597.198px] rounded-[12px] border-2 border-white/80 bg-white/5 lg:block" />
+        <div className="pointer-events-none absolute bottom-[25.8px] left-[787.5px] hidden h-[258.39px] w-[597.198px] overflow-hidden lg:block">
+          <Image
+            src="/assets/graphic.svg"
+            alt="Footer graphic"
+            fill
+            className="object-cover"
+          />
+        </div>
       </div>
     </footer>
   );

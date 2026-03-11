@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Bell, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,9 +22,13 @@ export default function Navbar() {
     <header className="w-full bg-[#71C4FF]">
       <div className="mx-auto flex h-[83px] w-full max-w-[1441px] items-center justify-between gap-4 px-4 sm:px-8 lg:pl-[80px] lg:pr-[70px]">
         <Link href="/" className="flex items-center gap-[15px] text-white">
-          <span className="grid h-[49.823px] w-[50.318px] place-items-center rounded-xl border-2 border-white/80 bg-white/10">
-            <span className="h-[24px] w-[24px] rounded-md border border-white/80" />
-          </span>
+          <Image
+            src="/assets/logo.svg"
+            alt="BruinPlace logo"
+            width={50}
+            height={50}
+            priority
+          />
           <span className="text-[24px] font-bold leading-8 tracking-[-0.144px]">
             BruinPlace
           </span>
