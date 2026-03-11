@@ -1,4 +1,4 @@
-import Header from "@/components/Header";
+import Navbar from "@/components/Navbar";
 
 export default function BuildingsLayout({
   children,
@@ -7,8 +7,8 @@ export default function BuildingsLayout({
 }) {
   return (
     <>
-      <Header />
-      <main>{children}</main>
+      <Navbar />
+      {children}
     </>
   );
 }

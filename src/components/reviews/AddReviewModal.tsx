@@ -31,6 +31,7 @@ type ReviewModalProps = {
   onSubmit: (draft: ReviewDraft) => void | Promise<void>;
   submitting?: boolean;
   maxPhotos?: number;
+  submitError?: string | null;
 };
 
 const DEFAULT_RATINGS: Record<RatingKey, number> = {
@@ -255,6 +256,7 @@ export function ReviewModal({
   onSubmit,
   submitting = false,
   maxPhotos = 5,
+  submitError = null,
 }: ReviewModalProps) {
   const [leaseStart, setLeaseStart] = React.useState(
     initialValue?.leaseStart ?? "",
@@ -286,7 +288,7 @@ export function ReviewModal({
   };
 
   const canSubmit =
-    reviewText.trim().length > 0 && Object.values(ratings).some((v) => v > 0);
+    reviewText.trim().length > 0 && Object.values(ratings).every((v) => v > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,6 +319,10 @@ export function ReviewModal({
       fades={false}
       footer={
         <div className="px-8 sm:px-10 py-6 bg-background">
+          {submitError ? (
+            <p className="mb-3 text-sm text-red-600">{submitError}</p>
+          ) : null}
+
           <div className="flex items-center justify-end gap-8">
             <button
               type="button"
@@ -428,7 +434,7 @@ export function ReviewModal({
           />
 
           <div className="text-sm text-muted-foreground">
-            Tip: at least rate one category + write a short comment.
+            Tip: rate all categories + write a short comment.
           </div>
         </div>
 

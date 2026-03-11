@@ -51,6 +51,9 @@ export default function SearchPage() {
   const [view, setView] = React.useState<ViewMode>("unit");
   const [mapExpanded, setMapExpanded] = React.useState(false);
   const [activeMapId, setActiveMapId] = React.useState<string | null>(null);
+  const [selectedUnitPropertyId, setSelectedUnitPropertyId] = React.useState<
+    string | null
+  >(null);
   const [mapReady, setMapReady] = React.useState(false);
   const [mapLoadError, setMapLoadError] = React.useState<string | null>(null);
   const [mapViewport, setMapViewport] = React.useState<MapViewport | null>(
@@ -225,8 +228,17 @@ export default function SearchPage() {
     }
   }, [buildings, sort]);
 
+  const displayedUnitListings = React.useMemo(() => {
+    if (!selectedUnitPropertyId) {
+      return sortedListings;
+    }
+    return sortedListings.filter(
+      (listing) => listing.propertyId === selectedUnitPropertyId,
+    );
+  }, [selectedUnitPropertyId, sortedListings]);
+
   const totalHomes =
-    view === "unit" ? sortedListings.length : sortedBuildings.length;
+    view === "unit" ? displayedUnitListings.length : sortedBuildings.length;
 
   const isLoading = !mapListingsPath || mapListingsQuery.isLoading;
   const isError = mapListingsQuery.isError;
@@ -302,7 +314,7 @@ export default function SearchPage() {
         mode: "price",
         markerLabel: point.markerLabel,
         count: Math.max(point.unitCount ?? 0, 1),
-        navigateHref: point.href,
+        activeKey: point.id,
       }));
     }
 
@@ -432,6 +444,7 @@ export default function SearchPage() {
             suppressAutoSelectRef.current = true;
             hoveredMarkerIdRef.current = null;
             activeMapIdRef.current = null;
+            setSelectedUnitPropertyId(null);
             setActiveMapId(null);
           });
         }
@@ -558,6 +571,29 @@ export default function SearchPage() {
         }
 
         if (point.activeKey) {
+          if (view === "unit") {
+            const nextPropertyId =
+              selectedUnitPropertyId === point.activeKey
+                ? null
+                : point.activeKey;
+            activeMapIdRef.current = nextPropertyId;
+            setActiveMapId(nextPropertyId);
+            setSelectedUnitPropertyId(nextPropertyId);
+
+            if (nextPropertyId) {
+              const firstListing = sortedListings.find(
+                (listing) => listing.propertyId === nextPropertyId,
+              );
+              if (firstListing) {
+                const node = cardRefs.current[firstListing.id];
+                if (node) {
+                  node.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+              }
+            }
+            return;
+          }
+
           suppressAutoSelectRef.current = false;
           activeMapIdRef.current = point.activeKey;
           setActiveMapId(point.activeKey);
@@ -641,7 +677,14 @@ export default function SearchPage() {
 
       markerRefs.current[point.id] = marker;
     });
-  }, [mapReady, renderedMarkerPoints, router, view]);
+  }, [
+    mapReady,
+    renderedMarkerPoints,
+    router,
+    selectedUnitPropertyId,
+    sortedListings,
+    view,
+  ]);
 
   React.useEffect(() => {
     if (!mapReady || !mapRef.current || !googleRef.current) return;
@@ -716,7 +759,14 @@ export default function SearchPage() {
   }, [activeMapId, mapReady, renderedMarkerPoints, view]);
 
   React.useEffect(() => {
-    if (view === "unit" || !visibleMapPoints.length) {
+    if (view === "unit") {
+      activeMapIdRef.current = selectedUnitPropertyId;
+      setActiveMapId(selectedUnitPropertyId);
+      return;
+    }
+
+    if (!visibleMapPoints.length) {
+      activeMapIdRef.current = null;
       setActiveMapId(null);
       return;
     }
@@ -733,7 +783,27 @@ export default function SearchPage() {
         ? prev
         : visibleMapPoints[0].id,
     );
-  }, [view, visibleMapPoints]);
+  }, [selectedUnitPropertyId, view, visibleMapPoints]);
+
+  React.useEffect(() => {
+    if (view !== "unit" || !selectedUnitPropertyId) {
+      return;
+    }
+    const stillVisible = sortedListings.some(
+      (listing) => listing.propertyId === selectedUnitPropertyId,
+    );
+    if (!stillVisible) {
+      activeMapIdRef.current = null;
+      setActiveMapId(null);
+      setSelectedUnitPropertyId(null);
+    }
+  }, [selectedUnitPropertyId, sortedListings, view]);
+
+  React.useEffect(() => {
+    if (view === "unit") return;
+    if (!selectedUnitPropertyId) return;
+    setSelectedUnitPropertyId(null);
+  }, [selectedUnitPropertyId, view]);
 
   function openExternalMap() {
     if (!mapRef.current) {
@@ -781,10 +851,11 @@ export default function SearchPage() {
             totalHomes={totalHomes}
             isLoading={isLoading}
             isError={isError}
-            sortedListings={sortedListings}
+            sortedListings={displayedUnitListings}
             sortedBuildings={sortedBuildings}
             activeMapId={activeMapId}
             cardRefs={cardRefs}
+            unitFilterSelection={selectedUnitPropertyId}
           />
 
           <SearchMapPane
@@ -819,6 +890,12 @@ export default function SearchPage() {
 
         .search-results-scroll {
           scroll-behavior: smooth;
+        }
+
+        .search-results-grid {
+          transition:
+            transform var(--search-dur) var(--search-ease),
+            opacity var(--search-dur) var(--search-ease);
         }
 
         .search-ui-control,

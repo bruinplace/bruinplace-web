@@ -3,7 +3,12 @@
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +17,7 @@ type ModalProps = {
   onOpenChange: (open: boolean) => void;
 
   title?: React.ReactNode;
+  description?: React.ReactNode;
   headerLeft?: React.ReactNode;
   headerCenter?: React.ReactNode;
   headerRight?: React.ReactNode;
@@ -50,6 +56,7 @@ export function Modal({
   onOpenChange,
 
   title,
+  description,
   headerLeft,
   headerCenter,
   headerRight,
@@ -133,6 +140,9 @@ export function Modal({
         {title ? null : (
           <DialogTitle className="sr-only">{a11yTitle}</DialogTitle>
         )}
+        <DialogDescription className="sr-only">
+          {description ?? "Dialog content"}
+        </DialogDescription>
 
         {/* ===== Header ===== */}
         <div

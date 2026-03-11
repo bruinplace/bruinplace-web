@@ -1,3 +1,4 @@
+import * as React from "react";
 import type { MutableRefObject } from "react";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { BuildingCard } from "@/components/listings/BuildingCard";
@@ -22,6 +23,7 @@ type SearchResultsColumnProps = {
   sortedBuildings: BuildingMapModel[];
   activeMapId: string | null;
   cardRefs: MutableRefObject<Record<string, HTMLDivElement | null>>;
+  unitFilterSelection: string | null;
 };
 
 export function SearchResultsColumn({
@@ -36,7 +38,19 @@ export function SearchResultsColumn({
   sortedBuildings,
   activeMapId,
   cardRefs,
+  unitFilterSelection,
 }: SearchResultsColumnProps) {
+  const [unitFilterAnimating, setUnitFilterAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    if (view !== "unit") return;
+    setUnitFilterAnimating(true);
+    const timeoutId = window.setTimeout(() => {
+      setUnitFilterAnimating(false);
+    }, 220);
+    return () => window.clearTimeout(timeoutId);
+  }, [sortedListings.length, unitFilterSelection, view]);
+
   return (
     <section className="search-pane-results min-w-0">
       <div className="search-results-scroll h-[calc(100dvh-140px)] overflow-y-auto px-1">
@@ -89,7 +103,14 @@ export function SearchResultsColumn({
           </div>
         </div>
 
-        <div className="grid gap-[22px] sm:grid-cols-2">
+        <div
+          className={cn(
+            "search-results-grid grid gap-[22px] sm:grid-cols-2",
+            view === "unit" &&
+              unitFilterAnimating &&
+              "translate-y-0.5 opacity-80",
+          )}
+        >
           {isLoading ? (
             <div className="rounded-xl border border-[#D4D4D4] bg-white p-4 text-sm text-zinc-600">
               Loading results...
@@ -124,7 +145,10 @@ export function SearchResultsColumn({
             !isError &&
             (view === "unit"
               ? sortedListings.map((listing) => {
-                  const isActive = activeMapId === listing.id;
+                  const isActive =
+                    activeMapId === listing.id ||
+                    (!!unitFilterSelection &&
+                      listing.propertyId === unitFilterSelection);
                   return (
                     <div
                       key={listing.id}
