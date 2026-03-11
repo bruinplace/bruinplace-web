@@ -18,6 +18,9 @@ type ViewMode = "unit" | "building";
 
 type ListingCardModel = {
   id: string;
+  propertyId: string;
+  propertyName: string;
+  monthlyRent: number;
   priceLabel: string;
   beds: number;
   baths: number;
@@ -27,35 +30,38 @@ type ListingCardModel = {
   reviewsCount: number;
   images?: string[];
   createdAt: number;
+  lat: number;
+  lng: number;
 };
 
-type ApiListing = {
+type ApiMapListing = {
   id: string;
   property_id: string;
   title: string;
   monthly_rent: number;
   square_feet: number | null;
   unit_type: string;
+  status: string;
   created_at: string;
-};
-
-type ApiListingListResponse = {
-  items: ApiListing[];
-  total: number;
-};
-
-type ApiProperty = {
-  id: string;
-  name: string;
+  property_name: string;
   address: string;
   city: string;
   state: string;
   postal_code: string;
+  latitude: number;
+  longitude: number;
 };
 
-type ApiPropertyListResponse = {
-  items: ApiProperty[];
+type ApiMapListingResponse = {
+  items: ApiMapListing[];
   total: number;
+  has_more: boolean;
+  applied_bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
 };
 
 type MapItem = {
@@ -75,12 +81,47 @@ type MapPoint = MapItem & {
   lng: number;
 };
 
+type RenderMarkerPoint = {
+  id: string;
+  lat: number;
+  lng: number;
+  mode: "dot" | "price";
+  markerLabel: string;
+  count: number;
+  activeKey?: string;
+  popupItem?: MapPoint;
+};
+
+type BuildingMapModel = Building & {
+  priceFrom: number;
+  createdAt: number;
+  lat: number;
+  lng: number;
+};
+
+type MapViewport = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+type GoogleLatLng = {
+  lat: () => number;
+  lng: () => number;
+};
+
+type GoogleMapsListener = {
+  remove: () => void;
+};
+
 type GoogleMapInstance = {
-  fitBounds: (bounds: GoogleLatLngBoundsInstance, padding?: number) => void;
   getZoom: () => number | undefined;
   setZoom: (zoom: number) => void;
-  getCenter: () => { lat: () => number; lng: () => number } | null;
-  addListener: (eventName: string, handler: () => void) => void;
+  setCenter: (center: { lat: number; lng: number }) => void;
+  getCenter: () => GoogleLatLng | null;
+  getBounds: () => GoogleLatLngBoundsReadable | null | undefined;
+  addListener: (eventName: string, handler: () => void) => GoogleMapsListener;
 };
 
 type GoogleMarkerOptions = {
@@ -94,10 +135,15 @@ type GoogleMarkerOptions = {
 
 type GoogleMarkerInstance = {
   setMap: (map: GoogleMapInstance | null) => void;
-  addListener: (eventName: string, handler: () => void) => void;
+  addListener: (eventName: string, handler: () => void) => GoogleMapsListener;
   setIcon: (icon: unknown) => void;
   setZIndex: (zIndex: number) => void;
   getPosition: () => unknown;
+};
+
+type GoogleLatLngBoundsReadable = {
+  getNorthEast: () => GoogleLatLng;
+  getSouthWest: () => GoogleLatLng;
 };
 
 type GoogleInfoWindowInstance = {
@@ -110,10 +156,6 @@ type GoogleInfoWindowInstance = {
   close: () => void;
 };
 
-type GoogleLatLngBoundsInstance = {
-  extend: (latLng: unknown) => void;
-};
-
 type GoogleMapsGlobal = {
   maps: {
     Map: new (
@@ -122,20 +164,13 @@ type GoogleMapsGlobal = {
     ) => GoogleMapInstance;
     Marker: new (opts: GoogleMarkerOptions) => GoogleMarkerInstance;
     InfoWindow: new (opts: { maxWidth?: number }) => GoogleInfoWindowInstance;
-    LatLngBounds: new () => GoogleLatLngBoundsInstance;
     Size: new (width: number, height: number) => unknown;
     Point: new (x: number, y: number) => unknown;
-    event: {
-      addListenerOnce: (
-        instance: GoogleMapInstance,
-        eventName: string,
-        handler: () => void,
-      ) => void;
-    };
   };
 };
 
 const UCLA_CENTER = { lat: 34.0689, lng: -118.4452 };
+const PRICE_MARKER_ZOOM = 16;
 
 let googleMapsLoaderPromise: Promise<GoogleMapsGlobal> | null = null;
 
@@ -190,12 +225,6 @@ function loadGoogleMapsApi(apiKey: string): Promise<GoogleMapsGlobal> {
   return googleMapsLoaderPromise;
 }
 
-function parseMonthlyPrice(priceLabel: string) {
-  const match = priceLabel.match(/\$([\d,]+)/);
-  if (!match) return 0;
-  return Number(match[1].replace(/,/g, ""));
-}
-
 function unitTypeToBeds(unitType: string): number {
   switch (unitType) {
     case "studio":
@@ -240,19 +269,52 @@ function stableHash(seed: string) {
   return Math.abs(h);
 }
 
-function pseudoPrice(seed: string) {
-  return 1200 + (stableHash(seed) % 1600);
+function normalizeViewport(viewport: MapViewport): MapViewport {
+  const f = (v: number) => Number(v.toFixed(6));
+  return {
+    north: f(viewport.north),
+    south: f(viewport.south),
+    east: f(viewport.east),
+    west: f(viewport.west),
+  };
 }
 
-function makeMapCoordinates(seed: string, index: number) {
-  const hash = stableHash(`${seed}-${index}`);
-  const angle = ((hash % 360) * Math.PI) / 180;
-  const radius = 0.0025 + (hash % 22) / 10000;
-
+function mapViewportFromMap(map: GoogleMapInstance): MapViewport | null {
+  const bounds = map.getBounds();
+  if (!bounds) return null;
+  const ne = bounds.getNorthEast();
+  const sw = bounds.getSouthWest();
   return {
-    lat: UCLA_CENTER.lat + Math.sin(angle) * radius,
-    lng: UCLA_CENTER.lng + Math.cos(angle) * radius * 1.25,
+    north: ne.lat(),
+    south: sw.lat(),
+    east: ne.lng(),
+    west: sw.lng(),
   };
+}
+
+function isSameViewport(a: MapViewport | null, b: MapViewport): boolean {
+  if (!a) return false;
+  return (
+    a.north === b.north &&
+    a.south === b.south &&
+    a.east === b.east &&
+    a.west === b.west
+  );
+}
+
+function longitudeInBounds(lng: number, west: number, east: number): boolean {
+  if (west <= east) {
+    return lng >= west && lng <= east;
+  }
+  return lng >= west || lng <= east;
+}
+
+function isPointInViewport(point: MapPoint, viewport: MapViewport): boolean {
+  return (
+    point.lat >= viewport.south &&
+    point.lat <= viewport.north &&
+    longitudeInBounds(point.lng, viewport.west, viewport.east)
+  );
 }
 
 function makePriceMarkerIcon(
@@ -275,6 +337,33 @@ function makePriceMarkerIcon(
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
     scaledSize: new google.maps.Size(width, height),
     anchor: new google.maps.Point(width / 2, height / 2),
+  };
+}
+
+function makeDotMarkerIcon(
+  google: GoogleMapsGlobal,
+  count: number,
+  active: boolean,
+) {
+  const hasCount = count > 1;
+  const diameter = hasCount ? 38 : 20;
+  const bg = active ? "#0EA5E9" : "#3EA6FC";
+  const ring = active ? "#BEE8FF" : "#FFFFFF";
+
+  const text = hasCount
+    ? `<text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">${count}</text>`
+    : "";
+
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}" viewBox="0 0 ${diameter} ${diameter}">
+  <circle cx="${diameter / 2}" cy="${diameter / 2}" r="${diameter / 2 - 1}" fill="${bg}" stroke="${ring}" stroke-width="2" />
+  ${text}
+</svg>`;
+
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    scaledSize: new google.maps.Size(diameter, diameter),
+    anchor: new google.maps.Point(diameter / 2, diameter / 2),
   };
 }
 
@@ -328,6 +417,10 @@ export default function SearchPage() {
   const [activeMapId, setActiveMapId] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const [mapLoadError, setMapLoadError] = React.useState<string | null>(null);
+  const [mapViewport, setMapViewport] = React.useState<MapViewport | null>(
+    null,
+  );
+  const [mapZoom, setMapZoom] = React.useState(15);
 
   const mapContainerRef = React.useRef<HTMLDivElement | null>(null);
   const mapRef = React.useRef<GoogleMapInstance | null>(null);
@@ -335,58 +428,43 @@ export default function SearchPage() {
   const infoWindowRef = React.useRef<GoogleInfoWindowInstance | null>(null);
   const markerRefs = React.useRef<Record<string, GoogleMarkerInstance>>({});
   const cardRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+  const idleDebounceRef = React.useRef<number | null>(null);
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
-  const listingsPath = React.useMemo(
-    () =>
-      buildPath("/listings", {
-        search: query || undefined,
-        min_rent: filters?.priceMin,
-        max_rent: filters?.priceMax,
-        limit: 80,
-      }),
-    [filters?.priceMax, filters?.priceMin, query],
-  );
+  const mapListingsPath = React.useMemo(() => {
+    if (!mapViewport) return null;
+    return buildPath("/listings/map", {
+      north: mapViewport.north,
+      south: mapViewport.south,
+      east: mapViewport.east,
+      west: mapViewport.west,
+      pad_ratio: 0.2,
+      search: query || undefined,
+      min_rent: filters?.priceMin,
+      max_rent: filters?.priceMax,
+      limit: 180,
+    });
+  }, [filters?.priceMax, filters?.priceMin, mapViewport, query]);
 
-  const propertiesPath = React.useMemo(
-    () =>
-      buildPath("/properties", {
-        q: query || undefined,
-        limit: 100,
-      }),
-    [query],
-  );
-
-  const listingsQuery = useQuery({
-    queryKey: ["search_listings", listingsPath],
-    queryFn: () => api.get<ApiListingListResponse>(listingsPath),
+  const mapListingsQuery = useQuery({
+    queryKey: ["search_map_listings", mapListingsPath],
+    queryFn: () => api.get<ApiMapListingResponse>(mapListingsPath as string),
+    enabled: Boolean(mapListingsPath),
+    placeholderData: (previousData) => previousData,
   });
-
-  const propertiesQuery = useQuery({
-    queryKey: ["search_properties", propertiesPath],
-    queryFn: () => api.get<ApiPropertyListResponse>(propertiesPath),
-  });
-
-  const propertyById = React.useMemo(
-    () =>
-      new Map(
-        (propertiesQuery.data?.items ?? []).map((p) => [p.id, p] as const),
-      ),
-    [propertiesQuery.data?.items],
-  );
 
   const listings: ListingCardModel[] = React.useMemo(
     () =>
-      (listingsQuery.data?.items ?? []).map((item) => {
-        const property = propertyById.get(item.property_id);
-        const address = property
-          ? `${property.address}, ${property.city}, ${property.state} ${property.postal_code}`
-          : "Address unavailable";
+      (mapListingsQuery.data?.items ?? []).map((item) => {
+        const address = `${item.address}, ${item.city}, ${item.state} ${item.postal_code}`;
         const hash = stableHash(item.id);
 
         return {
           id: item.id,
+          propertyId: item.property_id,
+          propertyName: item.property_name,
+          monthlyRent: item.monthly_rent,
           priceLabel: `$${item.monthly_rent.toLocaleString()} per month`,
           beds: unitTypeToBeds(item.unit_type),
           baths: unitTypeToBaths(item.unit_type),
@@ -396,41 +474,47 @@ export default function SearchPage() {
           reviewsCount: 1 + (hash % 17),
           images: [],
           createdAt: Date.parse(item.created_at) || 0,
+          lat: item.latitude,
+          lng: item.longitude,
         };
       }),
-    [listingsQuery.data?.items, propertyById],
+    [mapListingsQuery.data?.items],
   );
 
-  const buildings: Building[] = React.useMemo(
-    () =>
-      (propertiesQuery.data?.items ?? []).map((item) => {
-        const seed = stableHash(item.id);
-        return {
-          id: item.id,
-          name: item.name,
-          address: `${item.address}, ${item.city}, ${item.state} ${item.postal_code}`,
-          rating: Number((4 + (seed % 9) * 0.1).toFixed(1)),
-          reviewsCount: 1 + (seed % 17),
-          images: [],
-        };
-      }),
-    [propertiesQuery.data?.items],
-  );
+  const buildings = React.useMemo<BuildingMapModel[]>(() => {
+    const byProperty = new Map<string, BuildingMapModel>();
+    for (const listing of listings) {
+      const existing = byProperty.get(listing.propertyId);
+      if (existing) {
+        existing.priceFrom = Math.min(existing.priceFrom, listing.monthlyRent);
+        existing.createdAt = Math.max(existing.createdAt, listing.createdAt);
+        continue;
+      }
+      const seed = stableHash(listing.propertyId);
+      byProperty.set(listing.propertyId, {
+        id: listing.propertyId,
+        name: listing.propertyName,
+        address: listing.address,
+        rating: Number((4 + (seed % 9) * 0.1).toFixed(1)),
+        reviewsCount: 1 + (seed % 17),
+        images: [],
+        priceFrom: listing.monthlyRent,
+        createdAt: listing.createdAt,
+        lat: listing.lat,
+        lng: listing.lng,
+      });
+    }
+    return Array.from(byProperty.values());
+  }, [listings]);
 
-  const sorted = React.useMemo(() => {
+  const sortedListings = React.useMemo(() => {
     const arr = [...listings];
     switch (sort) {
       case "price_desc":
-        arr.sort(
-          (a, b) =>
-            parseMonthlyPrice(b.priceLabel) - parseMonthlyPrice(a.priceLabel),
-        );
+        arr.sort((a, b) => b.monthlyRent - a.monthlyRent);
         return arr;
       case "price_asc":
-        arr.sort(
-          (a, b) =>
-            parseMonthlyPrice(a.priceLabel) - parseMonthlyPrice(b.priceLabel),
-        );
+        arr.sort((a, b) => a.monthlyRent - b.monthlyRent);
         return arr;
       case "recent_desc":
         arr.sort((a, b) => b.createdAt - a.createdAt);
@@ -443,19 +527,36 @@ export default function SearchPage() {
     }
   }, [listings, sort]);
 
+  const sortedBuildings = React.useMemo(() => {
+    const arr = [...buildings];
+    switch (sort) {
+      case "price_desc":
+        arr.sort((a, b) => b.priceFrom - a.priceFrom);
+        return arr;
+      case "price_asc":
+        arr.sort((a, b) => a.priceFrom - b.priceFrom);
+        return arr;
+      case "recent_desc":
+        arr.sort((a, b) => b.createdAt - a.createdAt);
+        return arr;
+      case "recent_asc":
+        arr.sort((a, b) => a.createdAt - b.createdAt);
+        return arr;
+      default:
+        return arr;
+    }
+  }, [buildings, sort]);
+
   const totalHomes =
     view === "unit"
-      ? (listingsQuery.data?.total ?? 0)
-      : (propertiesQuery.data?.total ?? 0);
+      ? (mapListingsQuery.data?.total ?? sortedListings.length)
+      : sortedBuildings.length;
 
-  const isLoading =
-    view === "unit" ? listingsQuery.isLoading : propertiesQuery.isLoading;
-  const isError =
-    view === "unit" ? listingsQuery.isError : propertiesQuery.isError;
+  const isLoading = !mapListingsPath || mapListingsQuery.isLoading;
+  const isError = mapListingsQuery.isError;
 
-  const unitMapItems = React.useMemo<MapItem[]>(() => {
-    return sorted.slice(0, 8).map((listing) => {
-      const markerPrice = parseMonthlyPrice(listing.priceLabel);
+  const unitMapItems = React.useMemo<MapPoint[]>(() => {
+    return sortedListings.map((listing) => {
       return {
         id: listing.id,
         title: listing.priceLabel,
@@ -464,37 +565,120 @@ export default function SearchPage() {
         image: listing.images?.[0],
         rating: listing.rating,
         reviewsCount: listing.reviewsCount,
-        markerLabel: `$${markerPrice.toLocaleString()}`,
+        markerLabel: `$${listing.monthlyRent.toLocaleString()}`,
         href: `/listings/${listing.id}`,
+        lat: listing.lat,
+        lng: listing.lng,
       };
     });
-  }, [sorted]);
+  }, [sortedListings]);
 
-  const buildingMapItems = React.useMemo<MapItem[]>(() => {
-    return buildings.slice(0, 8).map((building) => {
-      const price = pseudoPrice(building.id);
+  const buildingMapItems = React.useMemo<MapPoint[]>(() => {
+    return sortedBuildings.map((building) => {
       return {
         id: building.id,
         title: building.name,
-        subtitle: `From $${price.toLocaleString()} per month`,
+        subtitle: `From $${building.priceFrom.toLocaleString()} per month`,
         address: building.address,
         image: building.images?.[0],
         rating: building.rating,
         reviewsCount: building.reviewsCount,
-        markerLabel: `$${price.toLocaleString()}`,
+        markerLabel: `$${building.priceFrom.toLocaleString()}`,
         href: `/building/${building.id}`,
+        lat: building.lat,
+        lng: building.lng,
       };
     });
-  }, [buildings]);
+  }, [sortedBuildings]);
 
-  const mapItems = view === "unit" ? unitMapItems : buildingMapItems;
+  const mapPoints = view === "unit" ? unitMapItems : buildingMapItems;
 
-  const mapPoints = React.useMemo<MapPoint[]>(() => {
-    return mapItems.map((item, index) => ({
-      ...item,
-      ...makeMapCoordinates(item.id, index),
-    }));
-  }, [mapItems]);
+  const visibleMapPoints = React.useMemo(() => {
+    if (!mapViewport) return mapPoints;
+    return mapPoints.filter((point) => isPointInViewport(point, mapViewport));
+  }, [mapPoints, mapViewport]);
+
+  const renderedMarkerPoints = React.useMemo<RenderMarkerPoint[]>(() => {
+    if (!visibleMapPoints.length) return [];
+
+    if (mapZoom < PRICE_MARKER_ZOOM) {
+      const bucketSize =
+        mapZoom < 13
+          ? 0.01
+          : mapZoom < 14
+            ? 0.006
+            : mapZoom < 15
+              ? 0.003
+              : 0.0015;
+      const clusters = new Map<string, MapPoint[]>();
+
+      for (const point of visibleMapPoints) {
+        const latBucket = Math.floor(point.lat / bucketSize);
+        const lngBucket = Math.floor(point.lng / bucketSize);
+        const key = `${latBucket}:${lngBucket}`;
+        const cluster = clusters.get(key);
+        if (cluster) {
+          cluster.push(point);
+        } else {
+          clusters.set(key, [point]);
+        }
+      }
+
+      return Array.from(clusters.entries()).map(([key, points]) => {
+        const lat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+        const lng = points.reduce((sum, p) => sum + p.lng, 0) / points.length;
+        return {
+          id: `cluster:${key}`,
+          lat,
+          lng,
+          mode: "dot",
+          markerLabel: "",
+          count: points.length,
+        };
+      });
+    }
+
+    const byCoordinate = new Map<string, MapPoint[]>();
+    for (const point of visibleMapPoints) {
+      const key = `${point.lat.toFixed(6)}:${point.lng.toFixed(6)}`;
+      const group = byCoordinate.get(key);
+      if (group) {
+        group.push(point);
+      } else {
+        byCoordinate.set(key, [point]);
+      }
+    }
+
+    const markers: RenderMarkerPoint[] = [];
+    for (const [key, points] of byCoordinate.entries()) {
+      if (points.length === 1) {
+        const single = points[0];
+        markers.push({
+          id: single.id,
+          lat: single.lat,
+          lng: single.lng,
+          mode: "price",
+          markerLabel: single.markerLabel,
+          count: 1,
+          activeKey: single.id,
+          popupItem: single,
+        });
+        continue;
+      }
+
+      const lat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+      const lng = points.reduce((sum, p) => sum + p.lng, 0) / points.length;
+      markers.push({
+        id: `overlap:${key}`,
+        lat,
+        lng,
+        mode: "dot",
+        markerLabel: "",
+        count: points.length,
+      });
+    }
+    return markers;
+  }, [mapZoom, visibleMapPoints]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -544,6 +728,40 @@ export default function SearchPage() {
   }, [googleMapsApiKey]);
 
   React.useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+
+    const map = mapRef.current;
+
+    const updateViewport = () => {
+      const rawViewport = mapViewportFromMap(map);
+      if (!rawViewport) return;
+      const normalized = normalizeViewport(rawViewport);
+      setMapViewport((prev) =>
+        isSameViewport(prev, normalized) ? prev : normalized,
+      );
+      setMapZoom(map.getZoom() ?? 15);
+    };
+
+    const scheduleViewportUpdate = () => {
+      if (idleDebounceRef.current !== null) {
+        window.clearTimeout(idleDebounceRef.current);
+      }
+      idleDebounceRef.current = window.setTimeout(updateViewport, 180);
+    };
+
+    scheduleViewportUpdate();
+    const idleListener = map.addListener("idle", scheduleViewportUpdate);
+
+    return () => {
+      idleListener.remove();
+      if (idleDebounceRef.current !== null) {
+        window.clearTimeout(idleDebounceRef.current);
+        idleDebounceRef.current = null;
+      }
+    };
+  }, [mapReady]);
+
+  React.useEffect(() => {
     if (!mapReady || !mapRef.current || !googleRef.current) return;
 
     const google = googleRef.current;
@@ -552,57 +770,67 @@ export default function SearchPage() {
     Object.values(markerRefs.current).forEach((marker) => marker.setMap(null));
     markerRefs.current = {};
 
-    if (!mapPoints.length) {
+    if (!renderedMarkerPoints.length) {
       infoWindowRef.current?.close();
       return;
     }
 
-    const bounds = new google.maps.LatLngBounds();
+    renderedMarkerPoints.forEach((point) => {
+      const icon =
+        point.mode === "price"
+          ? makePriceMarkerIcon(google, point.markerLabel, false)
+          : makeDotMarkerIcon(google, point.count, false);
 
-    mapPoints.forEach((point) => {
       const marker = new google.maps.Marker({
         position: { lat: point.lat, lng: point.lng },
         map,
-        icon: makePriceMarkerIcon(google, point.markerLabel, false),
-        zIndex: 100,
+        icon,
+        zIndex: point.mode === "price" ? 100 : 90,
         optimized: true,
-        title: point.markerLabel,
+        title:
+          point.mode === "price"
+            ? point.markerLabel
+            : point.count > 1
+              ? `${point.count} listings`
+              : "Listing",
       });
 
       marker.addListener("click", () => {
-        setActiveMapId(point.id);
+        if (point.activeKey) {
+          setActiveMapId(point.activeKey);
 
-        const node = cardRefs.current[point.id];
-        if (node) {
-          node.scrollIntoView({ behavior: "smooth", block: "center" });
+          const node = cardRefs.current[point.activeKey];
+          if (node) {
+            node.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          return;
         }
+
+        const nextZoom = Math.min(20, (map.getZoom() ?? 15) + 1);
+        map.setCenter({ lat: point.lat, lng: point.lng });
+        map.setZoom(nextZoom);
       });
 
       markerRefs.current[point.id] = marker;
-      bounds.extend(marker.getPosition());
     });
-
-    map.fitBounds(bounds, 80);
-    google.maps.event.addListenerOnce(map, "idle", () => {
-      const zoom = map.getZoom() ?? 15;
-      if (zoom > 15) {
-        map.setZoom(15);
-      }
-    });
-  }, [mapReady, mapPoints, view]);
+  }, [mapReady, renderedMarkerPoints]);
 
   React.useEffect(() => {
     if (!mapReady || !mapRef.current || !googleRef.current) return;
 
     const google = googleRef.current;
 
-    for (const point of mapPoints) {
+    for (const point of renderedMarkerPoints) {
       const marker = markerRefs.current[point.id];
       if (!marker) continue;
 
-      const active = point.id === activeMapId;
-      marker.setIcon(makePriceMarkerIcon(google, point.markerLabel, active));
-      marker.setZIndex(active ? 200 : 100);
+      const active = point.activeKey != null && point.activeKey === activeMapId;
+      const icon =
+        point.mode === "price"
+          ? makePriceMarkerIcon(google, point.markerLabel, active)
+          : makeDotMarkerIcon(google, point.count, active);
+      marker.setIcon(icon);
+      marker.setZIndex(active ? 210 : point.mode === "price" ? 100 : 90);
     }
 
     if (!activeMapId) {
@@ -610,8 +838,14 @@ export default function SearchPage() {
       return;
     }
 
-    const point = mapPoints.find((item) => item.id === activeMapId);
+    const point = renderedMarkerPoints.find(
+      (item) => item.activeKey === activeMapId,
+    );
     if (!point) {
+      infoWindowRef.current?.close();
+      return;
+    }
+    if (!point.popupItem) {
       infoWindowRef.current?.close();
       return;
     }
@@ -619,24 +853,26 @@ export default function SearchPage() {
     const marker = markerRefs.current[point.id];
     if (!marker) return;
 
-    infoWindowRef.current?.setContent(mapPopupHtml(point));
+    infoWindowRef.current?.setContent(mapPopupHtml(point.popupItem));
     infoWindowRef.current?.open({
       map: mapRef.current,
       anchor: marker,
       shouldFocus: false,
     });
-  }, [activeMapId, mapPoints, mapReady]);
+  }, [activeMapId, mapReady, renderedMarkerPoints]);
 
   React.useEffect(() => {
-    if (!mapItems.length) {
+    if (!visibleMapPoints.length) {
       setActiveMapId(null);
       return;
     }
 
     setActiveMapId((prev) =>
-      prev && mapItems.some((item) => item.id === prev) ? prev : mapItems[0].id,
+      prev && visibleMapPoints.some((item) => item.id === prev)
+        ? prev
+        : visibleMapPoints[0].id,
     );
-  }, [mapItems]);
+  }, [visibleMapPoints]);
 
   function openExternalMap() {
     if (!mapRef.current) {
@@ -743,7 +979,7 @@ export default function SearchPage() {
                 {!isLoading &&
                 !isError &&
                 view === "unit" &&
-                sorted.length === 0 ? (
+                sortedListings.length === 0 ? (
                   <div className="rounded-xl border border-[#D4D4D4] bg-white p-4 text-sm text-zinc-600">
                     No listings found.
                   </div>
@@ -752,7 +988,7 @@ export default function SearchPage() {
                 {!isLoading &&
                 !isError &&
                 view === "building" &&
-                buildings.length === 0 ? (
+                sortedBuildings.length === 0 ? (
                   <div className="rounded-xl border border-[#D4D4D4] bg-white p-4 text-sm text-zinc-600">
                     No buildings found.
                   </div>
@@ -761,7 +997,7 @@ export default function SearchPage() {
                 {!isLoading &&
                   !isError &&
                   (view === "unit"
-                    ? sorted.map((listing) => {
+                    ? sortedListings.map((listing) => {
                         const isActive = activeMapId === listing.id;
                         return (
                           <div
@@ -785,7 +1021,7 @@ export default function SearchPage() {
                           </div>
                         );
                       })
-                    : buildings.map((building) => {
+                    : sortedBuildings.map((building) => {
                         const isActive = activeMapId === building.id;
                         return (
                           <div
