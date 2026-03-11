@@ -64,6 +64,7 @@ export type MapItem = {
 export type MapPoint = MapItem & {
   lat: number;
   lng: number;
+  unitCount?: number;
 };
 
 export type RenderMarkerPoint = {
@@ -73,7 +74,9 @@ export type RenderMarkerPoint = {
   mode: "dot" | "price";
   markerLabel: string;
   count: number;
+  alwaysShowCount?: boolean;
   activeKey?: string;
+  navigateHref?: string;
   popupItem?: MapPoint;
 };
 
@@ -139,6 +142,10 @@ export type GoogleLatLngBoundsReadable = {
 
 export type GoogleInfoWindowInstance = {
   setContent: (content: string) => void;
+  setOptions: (opts: {
+    disableAutoPan?: boolean;
+    pixelOffset?: unknown;
+  }) => void;
   open: (opts: {
     map: GoogleMapInstance;
     anchor: GoogleMarkerInstance;
@@ -154,7 +161,11 @@ export type GoogleMapsGlobal = {
       opts: Record<string, unknown>,
     ) => GoogleMapInstance;
     Marker: new (opts: GoogleMarkerOptions) => GoogleMarkerInstance;
-    InfoWindow: new (opts: { maxWidth?: number }) => GoogleInfoWindowInstance;
+    InfoWindow: new (opts: {
+      maxWidth?: number;
+      disableAutoPan?: boolean;
+      pixelOffset?: unknown;
+    }) => GoogleInfoWindowInstance;
     Size: new (width: number, height: number) => unknown;
     Point: new (x: number, y: number) => unknown;
   };

@@ -132,11 +132,12 @@ export function mapViewportFromMap(map: GoogleMapInstance): MapViewport | null {
 
 export function isSameViewport(a: MapViewport | null, b: MapViewport): boolean {
   if (!a) return false;
+  const epsilon = 1e-5;
   return (
-    a.north === b.north &&
-    a.south === b.south &&
-    a.east === b.east &&
-    a.west === b.west
+    Math.abs(a.north - b.north) <= epsilon &&
+    Math.abs(a.south - b.south) <= epsilon &&
+    Math.abs(a.east - b.east) <= epsilon &&
+    Math.abs(a.west - b.west) <= epsilon
   );
 }
 
@@ -163,6 +164,12 @@ function longitudeSpanDegrees(west: number, east: number): number {
   let span = east - west;
   if (span < 0) span += 360;
   return span;
+}
+
+function longitudeOffsetFromWest(west: number, lng: number): number {
+  let offset = normalizeLongitude(lng) - normalizeLongitude(west);
+  if (offset < 0) offset += 360;
+  return offset;
 }
 
 export function viewportEdgeTolerance(viewport: MapViewport, ratio = 0.0125) {
@@ -198,26 +205,82 @@ export function isPointInViewport(
   return isCoordinateInViewport(point.lat, point.lng, viewport, tolerance);
 }
 
+export function popupPixelOffsetForPoint(
+  point: Pick<MapPoint, "lat" | "lng">,
+  viewport: MapViewport,
+  options?: {
+    mapWidth?: number;
+    mapHeight?: number;
+    popupWidth?: number;
+    popupHeight?: number;
+    margin?: number;
+  },
+) {
+  const popupWidth = options?.popupWidth ?? 320;
+  const popupHeight = options?.popupHeight ?? 300;
+  const margin = options?.margin ?? 12;
+  const mapWidth = Math.max(options?.mapWidth ?? 0, popupWidth + margin * 2);
+  const mapHeight = Math.max(options?.mapHeight ?? 0, popupHeight + margin * 2);
+
+  const latSpan = Math.max(viewport.north - viewport.south, 1e-6);
+  const lngSpan = Math.max(
+    longitudeSpanDegrees(viewport.west, viewport.east),
+    1e-6,
+  );
+
+  const xRatio = clamp(
+    longitudeOffsetFromWest(viewport.west, point.lng) / lngSpan,
+    0,
+    1,
+  );
+  const yRatio = clamp((viewport.north - point.lat) / latSpan, 0, 1);
+  const markerX = xRatio * mapWidth;
+  const markerY = yRatio * mapHeight;
+
+  const minCenterX = margin + popupWidth / 2;
+  const maxCenterX = mapWidth - margin - popupWidth / 2;
+  const targetCenterX = clamp(markerX, minCenterX, maxCenterX);
+  const x = targetCenterX - markerX;
+
+  const tailHeight = 16;
+  const defaultTop = markerY - popupHeight - tailHeight;
+  const minTop = margin;
+  const maxTop = mapHeight - popupHeight - margin;
+  const targetTop = clamp(defaultTop, minTop, maxTop);
+  const y = targetTop - defaultTop;
+
+  return { x, y };
+}
+
 export function makePriceMarkerIcon(
   google: GoogleMapsGlobal,
   label: string,
   active: boolean,
+  hovered = false,
 ) {
   const width = Math.max(78, label.length * 10 + 18);
   const height = 38;
-  const bg = active ? "#3EA6FC" : "#DCF0FF";
+  const scale = hovered ? 1.08 : 1;
+  const bg = active
+    ? hovered
+      ? "#1E92E8"
+      : "#3EA6FC"
+    : hovered
+      ? "#C7E6FF"
+      : "#DCF0FF";
   const fg = active ? "#FFFFFF" : "#0F172A";
+  const stroke = hovered ? "#2F97EA" : "#3EA6FC";
 
   const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="19" ry="19" fill="${bg}" stroke="#3EA6FC" stroke-width="2"/>
+  <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="19" ry="19" fill="${bg}" stroke="${stroke}" stroke-width="2"/>
   <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="${fg}">${label}</text>
 </svg>`;
 
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new google.maps.Size(width, height),
-    anchor: new google.maps.Point(width / 2, height / 2),
+    scaledSize: new google.maps.Size(width * scale, height * scale),
+    anchor: new google.maps.Point((width * scale) / 2, (height * scale) / 2),
   };
 }
 
@@ -225,10 +288,19 @@ export function makeDotMarkerIcon(
   google: GoogleMapsGlobal,
   count: number,
   active: boolean,
+  alwaysShowCount = false,
+  hovered = false,
 ) {
-  const hasCount = count > 1;
+  const hasCount = alwaysShowCount || count > 1;
   const diameter = hasCount ? 38 : 20;
-  const bg = active ? "#0EA5E9" : "#3EA6FC";
+  const scale = hovered ? 1.12 : 1;
+  const bg = active
+    ? hovered
+      ? "#0284C7"
+      : "#0EA5E9"
+    : hovered
+      ? "#1D90EF"
+      : "#3EA6FC";
   const ring = active ? "#BEE8FF" : "#FFFFFF";
 
   const text = hasCount
@@ -243,8 +315,11 @@ export function makeDotMarkerIcon(
 
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new google.maps.Size(diameter, diameter),
-    anchor: new google.maps.Point(diameter / 2, diameter / 2),
+    scaledSize: new google.maps.Size(diameter * scale, diameter * scale),
+    anchor: new google.maps.Point(
+      (diameter * scale) / 2,
+      (diameter * scale) / 2,
+    ),
   };
 }
 

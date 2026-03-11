@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import SearchHeader from "@/components/SearchHeader";
 import type { SearchFilters } from "@/components/search/FiltersDialog";
 import { api } from "@/lib/api";
@@ -16,6 +17,7 @@ import {
   makeDotMarkerIcon,
   makePriceMarkerIcon,
   mapPopupHtml,
+  popupPixelOffsetForPoint,
   mapViewportFromMap,
   normalizeViewport,
   PRICE_MARKER_ZOOM,
@@ -42,6 +44,7 @@ import type {
 import { useListingImageMap } from "./useListingImageMap";
 
 export default function SearchPage() {
+  const router = useRouter();
   const [sort, setSort] = React.useState<SortKey>("recent_desc");
   const [query, setQuery] = React.useState("");
   const [filters, setFilters] = React.useState<SearchFilters | null>(null);
@@ -62,8 +65,16 @@ export default function SearchPage() {
   const markerRefs = React.useRef<Record<string, GoogleMarkerInstance>>({});
   const cardRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const idleDebounceRef = React.useRef<number | null>(null);
+  const suppressAutoSelectRef = React.useRef(false);
+  const markerRenderSignatureRef = React.useRef("");
+  const activeMapIdRef = React.useRef<string | null>(null);
+  const hoveredMarkerIdRef = React.useRef<string | null>(null);
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
+  React.useEffect(() => {
+    activeMapIdRef.current = activeMapId;
+  }, [activeMapId]);
 
   const mapListingsPath = React.useMemo(() => {
     if (!mapViewport) return null;
@@ -220,23 +231,37 @@ export default function SearchPage() {
   const isLoading = !mapListingsPath || mapListingsQuery.isLoading;
   const isError = mapListingsQuery.isError;
 
+  const unitCountByPropertyId = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const listing of viewportListings) {
+      counts.set(listing.propertyId, (counts.get(listing.propertyId) ?? 0) + 1);
+    }
+    return counts;
+  }, [viewportListings]);
+
   const unitMapItems = React.useMemo<MapPoint[]>(() => {
-    return sortedListings.map((listing) => {
+    return sortedBuildings.map((building) => {
+      const unitCount = unitCountByPropertyId.get(building.id) ?? 0;
+      const markerLabel =
+        unitCount > 1
+          ? `${unitCount} units`
+          : `$${building.priceFrom.toLocaleString()}`;
       return {
-        id: listing.id,
-        title: listing.priceLabel,
-        subtitle: `${listing.beds} bd | ${listing.baths} ba | ${listing.sqft.toLocaleString()} sq ft`,
-        address: listing.address,
-        image: listing.images?.[0],
-        rating: listing.rating,
-        reviewsCount: listing.reviewsCount,
-        markerLabel: `$${listing.monthlyRent.toLocaleString()}`,
-        href: `/listings/${listing.id}`,
-        lat: listing.lat,
-        lng: listing.lng,
+        id: building.id,
+        title: building.name,
+        subtitle: `${unitCount} ${unitCount === 1 ? "unit" : "units"} available`,
+        address: building.address,
+        image: building.images?.[0],
+        rating: building.rating,
+        reviewsCount: building.reviewsCount,
+        markerLabel,
+        href: `/building/${building.id}`,
+        lat: building.lat,
+        lng: building.lng,
+        unitCount,
       };
     });
-  }, [sortedListings]);
+  }, [sortedBuildings, unitCountByPropertyId]);
 
   const buildingMapItems = React.useMemo<MapPoint[]>(() => {
     return sortedBuildings.map((building) => {
@@ -268,6 +293,18 @@ export default function SearchPage() {
 
   const renderedMarkerPoints = React.useMemo<RenderMarkerPoint[]>(() => {
     if (!visibleMapPoints.length) return [];
+
+    if (view === "unit") {
+      return visibleMapPoints.map((point) => ({
+        id: `unit-building:${point.id}`,
+        lat: point.lat,
+        lng: point.lng,
+        mode: "price",
+        markerLabel: point.markerLabel,
+        count: Math.max(point.unitCount ?? 0, 1),
+        navigateHref: point.href,
+      }));
+    }
 
     if (mapZoom < PRICE_MARKER_ZOOM) {
       const bucketSize =
@@ -334,19 +371,30 @@ export default function SearchPage() {
         continue;
       }
 
-      const lat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
-      const lng = points.reduce((sum, p) => sum + p.lng, 0) / points.length;
-      markers.push({
-        id: `overlap:${key}`,
-        lat,
-        lng,
-        mode: "dot",
-        markerLabel: "",
-        count: points.length,
+      const sorted = [...points].sort((a, b) => a.id.localeCompare(b.id));
+      const baseRotation = (stableHash(key) % 360) * (Math.PI / 180);
+      const radiusDegrees = Math.max(
+        0.00003,
+        0.00018 * Math.pow(0.65, Math.max(0, mapZoom - PRICE_MARKER_ZOOM)),
+      );
+
+      sorted.forEach((point, index) => {
+        const angle = baseRotation + (index * Math.PI * 2) / sorted.length;
+        const lngScale = Math.max(Math.cos((point.lat * Math.PI) / 180), 0.25);
+        markers.push({
+          id: `overlap:${key}:${point.id}`,
+          lat: point.lat + radiusDegrees * Math.sin(angle),
+          lng: point.lng + (radiusDegrees * Math.cos(angle)) / lngScale,
+          mode: "price",
+          markerLabel: point.markerLabel,
+          count: 1,
+          activeKey: point.id,
+          popupItem: point,
+        });
       });
     }
     return markers;
-  }, [mapZoom, visibleMapPoints]);
+  }, [mapZoom, view, visibleMapPoints]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -374,10 +422,17 @@ export default function SearchPage() {
             gestureHandling: "greedy",
           });
 
-          infoWindowRef.current = new google.maps.InfoWindow({ maxWidth: 320 });
+          infoWindowRef.current = new google.maps.InfoWindow({
+            maxWidth: 320,
+            disableAutoPan: true,
+          });
 
           mapRef.current.addListener("click", () => {
             infoWindowRef.current?.close();
+            suppressAutoSelectRef.current = true;
+            hoveredMarkerIdRef.current = null;
+            activeMapIdRef.current = null;
+            setActiveMapId(null);
           });
         }
 
@@ -434,6 +489,18 @@ export default function SearchPage() {
 
     const google = googleRef.current;
     const map = mapRef.current;
+    const markerSignature = renderedMarkerPoints
+      .map(
+        (point) =>
+          `${point.id}|${point.lat.toFixed(6)}|${point.lng.toFixed(6)}|${point.mode}|${point.markerLabel}|${point.count}|${point.activeKey ?? ""}|${point.navigateHref ?? ""}|${point.alwaysShowCount ? 1 : 0}`,
+      )
+      .join(";");
+
+    if (markerSignature === markerRenderSignatureRef.current) {
+      return;
+    }
+    markerRenderSignatureRef.current = markerSignature;
+    hoveredMarkerIdRef.current = null;
 
     Object.values(markerRefs.current).forEach((marker) => marker.setMap(null));
     markerRefs.current = {};
@@ -444,27 +511,55 @@ export default function SearchPage() {
     }
 
     renderedMarkerPoints.forEach((point) => {
+      const iconForState = (active: boolean, hovered: boolean) =>
+        point.mode === "price"
+          ? makePriceMarkerIcon(google, point.markerLabel, active, hovered)
+          : makeDotMarkerIcon(
+              google,
+              point.count,
+              active,
+              point.alwaysShowCount ?? false,
+              hovered,
+            );
+      const zIndexForState = (active: boolean, hovered: boolean) =>
+        hovered ? 280 : active ? 210 : point.mode === "price" ? 100 : 90;
+
       const icon =
         point.mode === "price"
-          ? makePriceMarkerIcon(google, point.markerLabel, false)
-          : makeDotMarkerIcon(google, point.count, false);
+          ? makePriceMarkerIcon(google, point.markerLabel, false, false)
+          : makeDotMarkerIcon(
+              google,
+              point.count,
+              false,
+              point.alwaysShowCount ?? false,
+              false,
+            );
 
       const marker = new google.maps.Marker({
         position: { lat: point.lat, lng: point.lng },
         map,
         icon,
-        zIndex: point.mode === "price" ? 100 : 90,
+        zIndex: zIndexForState(false, false),
         optimized: true,
         title:
           point.mode === "price"
             ? point.markerLabel
-            : point.count > 1
-              ? `${point.count} listings`
-              : "Listing",
+            : point.alwaysShowCount
+              ? `${point.count} ${point.count === 1 ? "unit" : "units"}`
+              : point.count > 1
+                ? `${point.count} listings`
+                : "Listing",
       });
 
       marker.addListener("click", () => {
+        if (point.navigateHref) {
+          router.push(point.navigateHref);
+          return;
+        }
+
         if (point.activeKey) {
+          suppressAutoSelectRef.current = false;
+          activeMapIdRef.current = point.activeKey;
           setActiveMapId(point.activeKey);
 
           const node = cardRefs.current[point.activeKey];
@@ -475,13 +570,78 @@ export default function SearchPage() {
         }
 
         const nextZoom = Math.min(20, (map.getZoom() ?? 15) + 1);
-        map.setCenter({ lat: point.lat, lng: point.lng });
+        const isClusterPoint =
+          point.mode === "dot" && !point.activeKey && !point.navigateHref;
+        if (isClusterPoint) {
+          const currentZoom = map.getZoom() ?? 15;
+          const clusterZoom = Math.min(
+            20,
+            Math.max(PRICE_MARKER_ZOOM, currentZoom + 1),
+          );
+          map.setCenter({ lat: point.lat, lng: point.lng });
+          map.setZoom(clusterZoom);
+          return;
+        }
+
+        if (view !== "building" || (!point.activeKey && !point.navigateHref)) {
+          map.setCenter({ lat: point.lat, lng: point.lng });
+        }
         map.setZoom(nextZoom);
+      });
+
+      marker.addListener("mouseover", () => {
+        const previouslyHoveredId = hoveredMarkerIdRef.current;
+        if (previouslyHoveredId && previouslyHoveredId !== point.id) {
+          const previousPoint = renderedMarkerPoints.find(
+            (item) => item.id === previouslyHoveredId,
+          );
+          const previousMarker = markerRefs.current[previouslyHoveredId];
+          if (previousPoint && previousMarker) {
+            const previousActive =
+              previousPoint.activeKey != null &&
+              previousPoint.activeKey === activeMapIdRef.current;
+            const previousIcon =
+              previousPoint.mode === "price"
+                ? makePriceMarkerIcon(
+                    google,
+                    previousPoint.markerLabel,
+                    previousActive,
+                    false,
+                  )
+                : makeDotMarkerIcon(
+                    google,
+                    previousPoint.count,
+                    previousActive,
+                    previousPoint.alwaysShowCount ?? false,
+                    false,
+                  );
+            previousMarker.setIcon(previousIcon);
+            previousMarker.setZIndex(
+              previousActive ? 210 : previousPoint.mode === "price" ? 100 : 90,
+            );
+          }
+        }
+
+        hoveredMarkerIdRef.current = point.id;
+        const active =
+          point.activeKey != null && point.activeKey === activeMapIdRef.current;
+        marker.setIcon(iconForState(active, true));
+        marker.setZIndex(zIndexForState(active, true));
+      });
+
+      marker.addListener("mouseout", () => {
+        if (hoveredMarkerIdRef.current === point.id) {
+          hoveredMarkerIdRef.current = null;
+        }
+        const active =
+          point.activeKey != null && point.activeKey === activeMapIdRef.current;
+        marker.setIcon(iconForState(active, false));
+        marker.setZIndex(zIndexForState(active, false));
       });
 
       markerRefs.current[point.id] = marker;
     });
-  }, [mapReady, renderedMarkerPoints]);
+  }, [mapReady, renderedMarkerPoints, router, view]);
 
   React.useEffect(() => {
     if (!mapReady || !mapRef.current || !googleRef.current) return;
@@ -492,16 +652,25 @@ export default function SearchPage() {
       const marker = markerRefs.current[point.id];
       if (!marker) continue;
 
+      const hovered = hoveredMarkerIdRef.current === point.id;
       const active = point.activeKey != null && point.activeKey === activeMapId;
       const icon =
         point.mode === "price"
-          ? makePriceMarkerIcon(google, point.markerLabel, active)
-          : makeDotMarkerIcon(google, point.count, active);
+          ? makePriceMarkerIcon(google, point.markerLabel, active, hovered)
+          : makeDotMarkerIcon(
+              google,
+              point.count,
+              active,
+              point.alwaysShowCount ?? false,
+              hovered,
+            );
       marker.setIcon(icon);
-      marker.setZIndex(active ? 210 : point.mode === "price" ? 100 : 90);
+      marker.setZIndex(
+        hovered ? 280 : active ? 210 : point.mode === "price" ? 100 : 90,
+      );
     }
 
-    if (!activeMapId) {
+    if (view === "building" || !activeMapId) {
       infoWindowRef.current?.close();
       return;
     }
@@ -521,17 +690,41 @@ export default function SearchPage() {
     const marker = markerRefs.current[point.id];
     if (!marker) return;
 
+    const rawViewport = mapViewportFromMap(mapRef.current);
+    const mapWidth = mapContainerRef.current?.clientWidth;
+    const mapHeight = mapContainerRef.current?.clientHeight;
+    const offset =
+      rawViewport != null
+        ? popupPixelOffsetForPoint(point.popupItem, rawViewport, {
+            mapWidth,
+            mapHeight,
+            popupWidth: 320,
+            popupHeight: 300,
+            margin: 12,
+          })
+        : { x: 0, y: -22 };
+    infoWindowRef.current?.setOptions({
+      disableAutoPan: true,
+      pixelOffset: new google.maps.Size(offset.x, offset.y),
+    });
     infoWindowRef.current?.setContent(mapPopupHtml(point.popupItem));
     infoWindowRef.current?.open({
       map: mapRef.current,
       anchor: marker,
       shouldFocus: false,
     });
-  }, [activeMapId, mapReady, renderedMarkerPoints]);
+  }, [activeMapId, mapReady, renderedMarkerPoints, view]);
 
   React.useEffect(() => {
-    if (!visibleMapPoints.length) {
+    if (view === "unit" || !visibleMapPoints.length) {
       setActiveMapId(null);
+      return;
+    }
+
+    if (suppressAutoSelectRef.current) {
+      setActiveMapId((prev) =>
+        prev && visibleMapPoints.some((item) => item.id === prev) ? prev : null,
+      );
       return;
     }
 
@@ -540,7 +733,7 @@ export default function SearchPage() {
         ? prev
         : visibleMapPoints[0].id,
     );
-  }, [visibleMapPoints]);
+  }, [view, visibleMapPoints]);
 
   function openExternalMap() {
     if (!mapRef.current) {
@@ -571,15 +764,15 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-[#F5F5F5]">
+    <div className="search-page-motion min-h-dvh bg-[#F5F5F5]">
       <SearchHeader
         query={query}
         onQueryChange={setQuery}
         onFiltersSave={(f) => setFilters(f)}
       />
 
-      <main className="mx-auto max-w-[1441px] px-4 pb-10 pt-6 sm:px-8 xl:px-[39px]">
-        <div className="grid gap-8 xl:grid-cols-[613px_689px] xl:gap-[50px]">
+      <main className="search-main mx-auto max-w-[1441px] px-4 pb-10 pt-6 sm:px-8 xl:px-[39px]">
+        <div className="search-main-grid grid gap-8 xl:grid-cols-[613px_689px] xl:gap-[50px]">
           <SearchResultsColumn
             view={view}
             onViewChange={setView}
@@ -605,6 +798,92 @@ export default function SearchPage() {
           />
         </div>
       </main>
+
+      <style jsx global>{`
+        .search-page-motion {
+          --search-ease: cubic-bezier(0.22, 1, 0.36, 1);
+          --search-dur: 280ms;
+        }
+
+        .search-main-grid {
+          animation: searchFadeUp 380ms var(--search-ease) both;
+        }
+
+        .search-pane-results {
+          animation: searchFadeUp 420ms var(--search-ease) 40ms both;
+        }
+
+        .search-pane-map {
+          animation: searchFadeUp 460ms var(--search-ease) 90ms both;
+        }
+
+        .search-results-scroll {
+          scroll-behavior: smooth;
+        }
+
+        .search-ui-control,
+        .search-ui-button,
+        .search-map-control-btn,
+        .search-result-card,
+        .search-map-frame {
+          transition:
+            transform var(--search-dur) var(--search-ease),
+            box-shadow var(--search-dur) var(--search-ease),
+            background-color var(--search-dur) var(--search-ease),
+            border-color var(--search-dur) var(--search-ease),
+            color var(--search-dur) var(--search-ease),
+            opacity var(--search-dur) var(--search-ease);
+        }
+
+        .search-result-card:hover {
+          transform: translateY(-2px);
+        }
+
+        .search-map-control-btn:hover {
+          transform: translateY(-1px) scale(1.03);
+          box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+        }
+
+        .search-map-frame:hover {
+          box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+        }
+
+        .search-map-canvas .gm-style .gm-style-iw-tc,
+        .search-map-canvas .gm-style .gm-style-iw-t::after,
+        .search-map-canvas .gm-style .gm-style-iw-t::before {
+          display: none !important;
+        }
+
+        .search-map-canvas .gm-style .gm-style-iw-c {
+          padding-bottom: 0 !important;
+        }
+
+        @keyframes searchFadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .search-main-grid,
+          .search-pane-results,
+          .search-pane-map {
+            animation: none !important;
+          }
+          .search-ui-control,
+          .search-ui-button,
+          .search-map-control-btn,
+          .search-result-card,
+          .search-map-frame {
+            transition: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

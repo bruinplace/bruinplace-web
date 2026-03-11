@@ -38,20 +38,20 @@ export function SearchResultsColumn({
   cardRefs,
 }: SearchResultsColumnProps) {
   return (
-    <section className="min-w-0">
-      <div className="h-[calc(100dvh-140px)] overflow-y-auto px-1">
+    <section className="search-pane-results min-w-0">
+      <div className="search-results-scroll h-[calc(100dvh-140px)] overflow-y-auto px-1">
         <div className="mb-[14px] flex items-center justify-between">
           <h1 className="text-[20px] font-bold leading-7 text-black">
             {topBarLabel(totalHomes, view)}
           </h1>
 
           <div className="flex items-center gap-[10px]">
-            <label className="inline-flex h-10 items-center gap-1 rounded-[25px] border border-[#71C4FF] bg-white px-4 text-[14px] text-[#0F172A]">
+            <label className="search-ui-control inline-flex h-10 items-center gap-1 rounded-[25px] border border-[#71C4FF] bg-white px-4 text-[14px] text-[#0F172A]">
               <span>Sort by</span>
               <select
                 value={sort}
                 onChange={(e) => onSortChange(e.target.value as SortKey)}
-                className="bg-transparent text-[14px] outline-none"
+                className="search-ui-control bg-transparent text-[14px] outline-none"
               >
                 <option value="recent_desc">Newest</option>
                 <option value="recent_asc">Oldest</option>
@@ -60,12 +60,12 @@ export function SearchResultsColumn({
               </select>
             </label>
 
-            <div className="inline-flex h-10 rounded-[25px] border border-[#71C4FF] bg-white p-1">
+            <div className="search-ui-control inline-flex h-10 rounded-[25px] border border-[#71C4FF] bg-white p-1">
               <button
                 type="button"
                 onClick={() => onViewChange("building")}
                 className={cn(
-                  "rounded-[25px] px-3 text-[14px] font-medium leading-5 transition-all",
+                  "search-ui-button rounded-[25px] px-3 text-[14px] font-medium leading-5 transition-all",
                   view === "building"
                     ? "bg-[#3EA6FC] text-white"
                     : "text-black hover:bg-[#E8F5FF]",
@@ -77,7 +77,7 @@ export function SearchResultsColumn({
                 type="button"
                 onClick={() => onViewChange("unit")}
                 className={cn(
-                  "rounded-[25px] px-3 text-[14px] font-medium leading-5 transition-all",
+                  "search-ui-button rounded-[25px] px-3 text-[14px] font-medium leading-5 transition-all",
                   view === "unit"
                     ? "bg-[#3EA6FC] text-white"
                     : "text-black hover:bg-[#E8F5FF]",
@@ -132,7 +132,7 @@ export function SearchResultsColumn({
                         cardRefs.current[listing.id] = node;
                       }}
                       className={cn(
-                        "w-full transition-all duration-200",
+                        "search-result-card w-full transition-all duration-200",
                         isActive && "-translate-y-0.5",
                       )}
                     >
@@ -155,7 +155,7 @@ export function SearchResultsColumn({
                         cardRefs.current[building.id] = node;
                       }}
                       className={cn(
-                        "w-full transition-all duration-200",
+                        "search-result-card w-full transition-all duration-200",
                         isActive && "-translate-y-0.5",
                       )}
                     >

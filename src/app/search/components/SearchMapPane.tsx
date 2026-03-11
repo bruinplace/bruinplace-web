@@ -22,31 +22,34 @@ export function SearchMapPane({
   onOpenExternalMap,
 }: SearchMapPaneProps) {
   return (
-    <aside className="hidden xl:block">
+    <aside className="search-pane-map hidden xl:block">
       <div className="sticky top-[96px]">
         <div
           className={cn(
-            "relative overflow-hidden rounded-[20px] border border-[#D4D4D4] bg-white shadow-sm transition-all duration-300",
+            "search-map-frame relative overflow-hidden rounded-[20px] border border-[#D4D4D4] bg-white shadow-sm transition-all duration-300",
             mapExpanded ? "h-[calc(100dvh-130px)]" : "h-[638px]",
           )}
         >
-          <div ref={mapContainerRef} className="h-full w-full" />
+          <div
+            ref={mapContainerRef}
+            className="search-map-canvas h-full w-full"
+          />
 
           <div className="absolute right-6 top-6 z-20 space-y-[10px]">
             <button
               type="button"
               onClick={onToggleMapExpanded}
-              className="grid h-[43px] w-[43px] place-items-center rounded-full bg-white text-[#3EA6FC] shadow-[1px_1px_5px_rgba(0,0,0,0.25)]"
+              className="search-map-control-btn grid h-[43px] w-[43px] place-items-center rounded-full bg-white text-[#3EA6FC] shadow-[1px_1px_5px_rgba(0,0,0,0.25)]"
               aria-label="Toggle map size"
             >
               <Maximize2 className="h-5 w-5" />
             </button>
 
-            <div className="overflow-hidden rounded-[50px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.25)]">
+            <div className="search-map-control-btn overflow-hidden rounded-[50px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.25)]">
               <button
                 type="button"
                 onClick={onZoomIn}
-                className="grid h-[45px] w-[43px] place-items-center text-[#3EA6FC]"
+                className="search-map-control-btn grid h-[45px] w-[43px] place-items-center text-[#3EA6FC]"
                 aria-label="Zoom in"
               >
                 <Plus className="h-5 w-5" />
@@ -55,7 +58,7 @@ export function SearchMapPane({
               <button
                 type="button"
                 onClick={onZoomOut}
-                className="grid h-[45px] w-[43px] place-items-center text-[#3EA6FC]"
+                className="search-map-control-btn grid h-[45px] w-[43px] place-items-center text-[#3EA6FC]"
                 aria-label="Zoom out"
               >
                 <Minus className="h-5 w-5" />
@@ -65,7 +68,7 @@ export function SearchMapPane({
             <button
               type="button"
               onClick={onOpenExternalMap}
-              className="inline-flex h-[43px] items-center gap-1 rounded-full bg-white px-3 text-xs font-medium text-[#3EA6FC] shadow-[1px_1px_5px_rgba(0,0,0,0.25)]"
+              className="search-map-control-btn inline-flex h-[43px] items-center gap-1 rounded-full bg-white px-3 text-xs font-medium text-[#3EA6FC] shadow-[1px_1px_5px_rgba(0,0,0,0.25)]"
             >
               Open
               <ExternalLink className="h-3.5 w-3.5" />
