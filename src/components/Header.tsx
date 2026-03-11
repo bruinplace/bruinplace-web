@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,8 +32,19 @@ export default function Header() {
     <>
       <header className="w-full bg-[#71C4FF]">
         <div className="mx-auto flex min-h-[74px] max-w-[1440px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <Link href="/" className="shrink-0 text-xl font-semibold text-white">
-            BruinPlace
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-3 text-xl font-semibold text-white"
+          >
+            <Image
+              src="/assets/logo.svg"
+              alt="BruinPlace logo"
+              width={51}
+              height={50}
+              className="[filter:brightness(0)_invert(1)]"
+              priority
+            />
+            <span>BruinPlace</span>
           </Link>
 
           <div className="flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto">

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Heart, Search, Star } from "lucide-react";
 
@@ -40,11 +41,19 @@ const LISTINGS: LandingListing[] = [
   },
 ];
 
-function GraphicPlaceholder({ className }: { className: string }) {
+function HeroArtwork({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+}) {
   return (
-    <div
-      className={`rounded-[14px] border-2 border-[#72B7F0] bg-[#DFF1FF]/20 ${className}`}
-    />
+    <div className={`absolute hidden overflow-hidden md:block ${className}`}>
+      <Image src={src} alt={alt} fill className="object-cover" />
+    </div>
   );
 }
 
@@ -143,10 +152,26 @@ export default function Home() {
   return (
     <div className="w-full bg-white">
       <section className="relative h-[374px] overflow-hidden bg-[#DFF1FF]">
-        <GraphicPlaceholder className="absolute left-[21px] top-[9px] hidden h-[123px] w-[182px] md:block" />
-        <GraphicPlaceholder className="absolute left-[112px] top-[130px] hidden h-[233px] w-[276px] md:block" />
-        <GraphicPlaceholder className="absolute right-[0px] top-[8px] hidden h-[202px] w-[316px] md:block" />
-        <GraphicPlaceholder className="absolute right-[202px] top-[221px] hidden h-[153px] w-[169px] md:block" />
+        <HeroArtwork
+          src="/assets/untitled-artwork-1-1.svg"
+          alt="Untitled Artwork 1 1"
+          className="left-[21px] top-[9px] h-[123px] w-[182px]"
+        />
+        <HeroArtwork
+          src="/assets/untitled-artwork-3-1.svg"
+          alt="Untitled Artwork 3 1"
+          className="left-[112px] top-[130px] h-[233px] w-[276px]"
+        />
+        <HeroArtwork
+          src="/assets/untitled-artwork-2-1.svg"
+          alt="Untitled Artwork 2 1"
+          className="right-[0px] top-[8px] h-[202px] w-[316px]"
+        />
+        <HeroArtwork
+          src="/assets/untitled-artwork-4.svg"
+          alt="Untitled Artwork 4"
+          className="right-[202px] top-[221px] h-[153px] w-[169px]"
+        />
 
         <BrickCluster className="left-[243px] top-[58px]" />
         <BrickCluster className="right-[280px] top-[132px]" reverse />
