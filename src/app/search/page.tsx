@@ -39,6 +39,7 @@ import type {
   SortKey,
   ViewMode,
 } from "./types";
+import { useListingImageMap } from "./useListingImageMap";
 
 export default function SearchPage() {
   const [sort, setSort] = React.useState<SortKey>("recent_desc");
@@ -86,7 +87,7 @@ export default function SearchPage() {
     placeholderData: (previousData) => previousData,
   });
 
-  const listings: ListingCardModel[] = React.useMemo(
+  const baseListings: ListingCardModel[] = React.useMemo(
     () =>
       (mapListingsQuery.data?.items ?? []).map((item) => {
         const address = `${item.address}, ${item.city}, ${item.state} ${item.postal_code}`;
@@ -113,13 +114,33 @@ export default function SearchPage() {
     [mapListingsQuery.data?.items],
   );
 
-  const viewportListings = React.useMemo<ListingCardModel[]>(() => {
-    if (!mapViewport) return listings;
+  const viewportBaseListings = React.useMemo<ListingCardModel[]>(() => {
+    if (!mapViewport) return baseListings;
     const tolerance = viewportEdgeTolerance(mapViewport);
-    return listings.filter((listing) =>
+    return baseListings.filter((listing) =>
       isCoordinateInViewport(listing.lat, listing.lng, mapViewport, tolerance),
     );
-  }, [listings, mapViewport]);
+  }, [baseListings, mapViewport]);
+
+  const listingImagesById = useListingImageMap(
+    React.useMemo(
+      () =>
+        viewportBaseListings.map((listing) => ({
+          listingId: listing.id,
+          propertyId: listing.propertyId,
+        })),
+      [viewportBaseListings],
+    ),
+  );
+
+  const viewportListings = React.useMemo<ListingCardModel[]>(
+    () =>
+      viewportBaseListings.map((listing) => ({
+        ...listing,
+        images: listingImagesById[listing.id] ?? [],
+      })),
+    [listingImagesById, viewportBaseListings],
+  );
 
   const buildings = React.useMemo<BuildingMapModel[]>(() => {
     const byProperty = new Map<string, BuildingMapModel>();
@@ -128,6 +149,12 @@ export default function SearchPage() {
       if (existing) {
         existing.priceFrom = Math.min(existing.priceFrom, listing.monthlyRent);
         existing.createdAt = Math.max(existing.createdAt, listing.createdAt);
+        if (
+          (!existing.images || existing.images.length === 0) &&
+          listing.images
+        ) {
+          existing.images = listing.images;
+        }
         continue;
       }
       const seed = stableHash(listing.propertyId);
@@ -137,7 +164,7 @@ export default function SearchPage() {
         address: listing.address,
         rating: Number((4 + (seed % 9) * 0.1).toFixed(1)),
         reviewsCount: 1 + (seed % 17),
-        images: [],
+        images: listing.images,
         priceFrom: listing.monthlyRent,
         createdAt: listing.createdAt,
         lat: listing.lat,
