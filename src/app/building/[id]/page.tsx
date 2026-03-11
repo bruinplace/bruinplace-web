@@ -1134,7 +1134,6 @@ export default function BuildingListingPage() {
       south: property.latitude - 0.03,
       east: property.longitude + 0.03,
       west: property.longitude - 0.03,
-      limit: 180,
       pad_ratio: 0,
     });
   }, [property]);

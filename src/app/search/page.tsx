@@ -29,6 +29,7 @@ import {
 } from "./map-utils";
 import type {
   ApiMapListingResponse,
+  ApiSearchListingResponse,
   BuildingMapModel,
   GoogleInfoWindowInstance,
   GoogleMapInstance,
@@ -46,7 +47,9 @@ import { useListingImageMap } from "./useListingImageMap";
 export default function SearchPage() {
   const router = useRouter();
   const [sort, setSort] = React.useState<SortKey>("recent_desc");
-  const [query, setQuery] = React.useState("");
+  const [searchInput, setSearchInput] = React.useState("");
+  const [activeSearchQuery, setActiveSearchQuery] = React.useState("");
+  const [searchSubmitNonce, setSearchSubmitNonce] = React.useState(0);
   const [filters, setFilters] = React.useState<SearchFilters | null>(null);
   const [view, setView] = React.useState<ViewMode>("unit");
   const [mapExpanded, setMapExpanded] = React.useState(false);
@@ -72,27 +75,66 @@ export default function SearchPage() {
   const markerRenderSignatureRef = React.useRef("");
   const activeMapIdRef = React.useRef<string | null>(null);
   const hoveredMarkerIdRef = React.useRef<string | null>(null);
+  const pendingSearchFitNonceRef = React.useRef<number | null>(null);
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+  const isSearchMode = activeSearchQuery.length > 0;
+
+  const toListingCardModel = React.useCallback(
+    (
+      item:
+        | ApiMapListingResponse["items"][number]
+        | ApiSearchListingResponse["items"][number],
+    ): ListingCardModel => {
+      const address = `${item.address}, ${item.city}, ${item.state} ${item.postal_code}`;
+      const hash = stableHash(item.id);
+
+      return {
+        id: item.id,
+        propertyId: item.property_id,
+        propertyName: item.property_name,
+        monthlyRent: item.monthly_rent,
+        priceLabel: `$${item.monthly_rent.toLocaleString()} per month`,
+        beds: unitTypeToBeds(item.unit_type),
+        baths: unitTypeToBaths(item.unit_type),
+        sqft: item.square_feet ?? 0,
+        address,
+        rating: Number((4 + (hash % 10) * 0.1).toFixed(1)),
+        reviewsCount: 1 + (hash % 17),
+        images: [],
+        createdAt: Date.parse(item.created_at) || 0,
+        lat: item.latitude,
+        lng: item.longitude,
+      };
+    },
+    [],
+  );
 
   React.useEffect(() => {
     activeMapIdRef.current = activeMapId;
   }, [activeMapId]);
 
   const mapListingsPath = React.useMemo(() => {
-    if (!mapViewport) return null;
+    if (isSearchMode || !mapViewport) return null;
     return buildPath("/listings/map", {
       north: mapViewport.north,
       south: mapViewport.south,
       east: mapViewport.east,
       west: mapViewport.west,
       pad_ratio: 0.2,
-      search: query || undefined,
       min_rent: filters?.priceMin,
       max_rent: filters?.priceMax,
-      limit: 180,
     });
-  }, [filters?.priceMax, filters?.priceMin, mapViewport, query]);
+  }, [filters?.priceMax, filters?.priceMin, isSearchMode, mapViewport]);
+
+  const searchListingsPath = React.useMemo(() => {
+    if (!isSearchMode) return null;
+    return buildPath("/listings/search", {
+      q: activeSearchQuery,
+      min_rent: filters?.priceMin,
+      max_rent: filters?.priceMax,
+    });
+  }, [activeSearchQuery, filters?.priceMax, filters?.priceMin, isSearchMode]);
 
   const mapListingsQuery = useQuery({
     queryKey: ["search_map_listings", mapListingsPath],
@@ -101,40 +143,35 @@ export default function SearchPage() {
     placeholderData: (previousData) => previousData,
   });
 
-  const baseListings: ListingCardModel[] = React.useMemo(
-    () =>
-      (mapListingsQuery.data?.items ?? []).map((item) => {
-        const address = `${item.address}, ${item.city}, ${item.state} ${item.postal_code}`;
-        const hash = stableHash(item.id);
+  const searchListingsQuery = useQuery({
+    queryKey: ["search_ranked_listings", searchListingsPath],
+    queryFn: () =>
+      api.get<ApiSearchListingResponse>(searchListingsPath as string),
+    enabled: Boolean(searchListingsPath),
+  });
 
-        return {
-          id: item.id,
-          propertyId: item.property_id,
-          propertyName: item.property_name,
-          monthlyRent: item.monthly_rent,
-          priceLabel: `$${item.monthly_rent.toLocaleString()} per month`,
-          beds: unitTypeToBeds(item.unit_type),
-          baths: unitTypeToBaths(item.unit_type),
-          sqft: item.square_feet ?? 0,
-          address,
-          rating: Number((4 + (hash % 10) * 0.1).toFixed(1)),
-          reviewsCount: 1 + (hash % 17),
-          images: [],
-          createdAt: Date.parse(item.created_at) || 0,
-          lat: item.latitude,
-          lng: item.longitude,
-        };
-      }),
-    [mapListingsQuery.data?.items],
+  const activeListingItems = React.useMemo(() => {
+    if (isSearchMode) return searchListingsQuery.data?.items ?? [];
+    return mapListingsQuery.data?.items ?? [];
+  }, [
+    isSearchMode,
+    mapListingsQuery.data?.items,
+    searchListingsQuery.data?.items,
+  ]);
+
+  const baseListings: ListingCardModel[] = React.useMemo(
+    () => activeListingItems.map((item) => toListingCardModel(item)),
+    [activeListingItems, toListingCardModel],
   );
 
   const viewportBaseListings = React.useMemo<ListingCardModel[]>(() => {
+    if (isSearchMode) return baseListings;
     if (!mapViewport) return baseListings;
     const tolerance = viewportEdgeTolerance(mapViewport);
     return baseListings.filter((listing) =>
       isCoordinateInViewport(listing.lat, listing.lng, mapViewport, tolerance),
     );
-  }, [baseListings, mapViewport]);
+  }, [baseListings, isSearchMode, mapViewport]);
 
   const listingImagesById = useListingImageMap(
     React.useMemo(
@@ -240,8 +277,12 @@ export default function SearchPage() {
   const totalHomes =
     view === "unit" ? displayedUnitListings.length : sortedBuildings.length;
 
-  const isLoading = !mapListingsPath || mapListingsQuery.isLoading;
-  const isError = mapListingsQuery.isError;
+  const isLoading = isSearchMode
+    ? searchListingsQuery.isLoading
+    : !mapListingsPath || mapListingsQuery.isLoading;
+  const isError = isSearchMode
+    ? searchListingsQuery.isError
+    : mapListingsQuery.isError;
 
   const unitCountByPropertyId = React.useMemo(() => {
     const counts = new Map<string, number>();
@@ -805,6 +846,54 @@ export default function SearchPage() {
     setSelectedUnitPropertyId(null);
   }, [selectedUnitPropertyId, view]);
 
+  React.useEffect(() => {
+    if (searchInput.trim() !== "") return;
+    if (!activeSearchQuery) return;
+    pendingSearchFitNonceRef.current = null;
+    setActiveSearchQuery("");
+  }, [activeSearchQuery, searchInput]);
+
+  React.useEffect(() => {
+    if (!mapReady || !mapRef.current || !googleRef.current) return;
+    if (!activeSearchQuery || !searchListingsQuery.data) return;
+    if (pendingSearchFitNonceRef.current !== searchSubmitNonce) return;
+
+    pendingSearchFitNonceRef.current = null;
+    if (!searchListingsQuery.data.items.length) return;
+
+    const bounds = new googleRef.current.maps.LatLngBounds();
+    for (const item of searchListingsQuery.data.items) {
+      bounds.extend({ lat: item.latitude, lng: item.longitude });
+    }
+    mapRef.current.fitBounds(bounds, 64);
+  }, [
+    activeSearchQuery,
+    mapReady,
+    searchListingsQuery.data,
+    searchSubmitNonce,
+  ]);
+
+  function handleSearchSubmit() {
+    const normalized = searchInput.trim();
+    if (!normalized) {
+      pendingSearchFitNonceRef.current = null;
+      setActiveSearchQuery("");
+      return;
+    }
+
+    setSelectedUnitPropertyId(null);
+    setActiveMapId(null);
+    suppressAutoSelectRef.current = false;
+    activeMapIdRef.current = null;
+    hoveredMarkerIdRef.current = null;
+    setActiveSearchQuery(normalized);
+    setSearchSubmitNonce((prev) => {
+      const next = prev + 1;
+      pendingSearchFitNonceRef.current = next;
+      return next;
+    });
+  }
+
   function openExternalMap() {
     if (!mapRef.current) {
       window.open(
@@ -836,8 +925,9 @@ export default function SearchPage() {
   return (
     <div className="search-page-motion min-h-dvh bg-[#F5F5F5]">
       <SearchHeader
-        query={query}
-        onQueryChange={setQuery}
+        query={searchInput}
+        onQueryChange={setSearchInput}
+        onSearchSubmit={handleSearchSubmit}
         onFiltersSave={(f) => setFilters(f)}
       />
 

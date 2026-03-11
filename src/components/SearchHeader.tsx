@@ -30,10 +30,12 @@ import {
 export default function SearchHeader({
   query,
   onQueryChange,
+  onSearchSubmit,
   onFiltersSave,
 }: {
   query: string;
   onQueryChange: (v: string) => void;
+  onSearchSubmit: () => void;
   onFiltersSave: (filters: SearchFilters) => void;
 }) {
   const [signInOpen, setSignInOpen] = useState(false);
@@ -57,7 +59,13 @@ export default function SearchHeader({
 
           {/* Center: Search + Filters */}
           <div className="flex flex-1 items-center justify-center">
-            <div className="flex w-full max-w-[640px] items-center gap-3">
+            <form
+              className="flex w-full max-w-[640px] items-center gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                onSearchSubmit();
+              }}
+            >
               {/* Search pill */}
               <div className="flex h-10 flex-1 items-center rounded-full bg-white/95 pl-4 pr-2 shadow-sm">
                 <Input
@@ -67,7 +75,7 @@ export default function SearchHeader({
                   className="h-10 border-0 bg-transparent p-0 text-sm text-slate-700 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <Button
-                  type="button"
+                  type="submit"
                   size="icon"
                   variant="ghost"
                   className="h-8 w-8 rounded-full"
@@ -90,7 +98,7 @@ export default function SearchHeader({
                 }
                 onSave={onFiltersSave}
               />
-            </div>
+            </form>
           </div>
 
           {/* Right: actions */}

@@ -49,6 +49,32 @@ export type ApiMapListingResponse = {
   };
 };
 
+export type ApiSearchListing = {
+  id: string;
+  property_id: string;
+  title: string;
+  description: string;
+  monthly_rent: number;
+  unit_type: string;
+  square_feet: number | null;
+  status: string;
+  created_at: string;
+  property_name: string;
+  address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  relevance_score: number;
+};
+
+export type ApiSearchListingResponse = {
+  items: ApiSearchListing[];
+  total: number;
+};
+
 export type MapItem = {
   id: string;
   title: string;
@@ -113,6 +139,7 @@ export type GoogleMapInstance = {
   getZoom: () => number | undefined;
   setZoom: (zoom: number) => void;
   setCenter: (center: { lat: number; lng: number }) => void;
+  fitBounds: (bounds: GoogleLatLngBoundsWritable, padding?: number) => void;
   getCenter: () => GoogleLatLng | null;
   getBounds: () => GoogleLatLngBoundsReadable | null | undefined;
   addListener: (eventName: string, handler: () => void) => GoogleMapsListener;
@@ -138,6 +165,10 @@ export type GoogleMarkerInstance = {
 export type GoogleLatLngBoundsReadable = {
   getNorthEast: () => GoogleLatLng;
   getSouthWest: () => GoogleLatLng;
+};
+
+export type GoogleLatLngBoundsWritable = {
+  extend: (point: { lat: number; lng: number }) => void;
 };
 
 export type GoogleInfoWindowInstance = {
@@ -166,6 +197,7 @@ export type GoogleMapsGlobal = {
       disableAutoPan?: boolean;
       pixelOffset?: unknown;
     }) => GoogleInfoWindowInstance;
+    LatLngBounds: new () => GoogleLatLngBoundsWritable;
     Size: new (width: number, height: number) => unknown;
     Point: new (x: number, y: number) => unknown;
   };
