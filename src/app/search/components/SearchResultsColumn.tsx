@@ -39,7 +39,7 @@ export function SearchResultsColumn({
 }: SearchResultsColumnProps) {
   return (
     <section className="min-w-0">
-      <div className="h-[calc(100dvh-140px)] overflow-y-auto pr-1">
+      <div className="h-[calc(100dvh-140px)] overflow-y-auto px-1">
         <div className="mb-[14px] flex items-center justify-between">
           <h1 className="text-[20px] font-bold leading-7 text-black">
             {topBarLabel(totalHomes, view)}
@@ -140,7 +140,7 @@ export function SearchResultsColumn({
                         listing={listing}
                         className={cn(
                           "w-full",
-                          isActive && "ring-2 ring-[#3EA6FC] ring-offset-1",
+                          isActive && "ring-2 ring-inset ring-[#3EA6FC]",
                         )}
                       />
                     </div>
@@ -163,7 +163,7 @@ export function SearchResultsColumn({
                         building={building}
                         className={cn(
                           "w-full",
-                          isActive && "ring-2 ring-[#3EA6FC] ring-offset-1",
+                          isActive && "ring-2 ring-inset ring-[#3EA6FC]",
                         )}
                       />
                     </div>
