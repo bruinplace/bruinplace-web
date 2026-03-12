@@ -25,7 +25,7 @@ export default function Header() {
 
   async function handleSignOut() {
     await api.post("/auth/logout");
-    await queryClient.invalidateQueries({ queryKey: [QueryKeys.AUTH_ME] });
+    queryClient.removeQueries({ queryKey: [QueryKeys.AUTH_ME], exact: true });
   }
 
   return (
