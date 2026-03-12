@@ -316,6 +316,7 @@ export function ListingGallery({
                 alt={safeImages[activeIndex]?.alt ?? `Image ${activeIndex + 1}`}
                 className="absolute inset-0 h-full w-full object-contain"
                 loading="eager"
+                decoding="async"
               />
             </div>
 
@@ -386,6 +387,7 @@ function GalleryTile({
           alt={img.alt ?? "Gallery image"}
           className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
           loading="lazy"
+          decoding="async"
         />
       </div>
 

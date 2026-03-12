@@ -8,6 +8,7 @@ type ListingImageTarget = {
 
 type ApiImageItem = {
   url: string;
+  low_res_url?: string | null;
   display_order: number;
 };
 
@@ -22,7 +23,7 @@ function sortImageUrls(items: ApiImageItem[] | undefined): string[] {
   return (items ?? [])
     .slice()
     .sort((a, b) => a.display_order - b.display_order)
-    .map((item) => item.url)
+    .map((item) => item.low_res_url ?? item.url)
     .filter(Boolean);
 }
 

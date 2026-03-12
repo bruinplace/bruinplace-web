@@ -258,23 +258,23 @@ export function makePriceMarkerIcon(
   active: boolean,
   hovered = false,
 ) {
-  const width = Math.max(78, label.length * 10 + 18);
-  const height = 38;
+  const width = Math.max(62, label.length * 8 + 14);
+  const height = 32;
   const scale = hovered ? 1.08 : 1;
   const bg = active
     ? hovered
-      ? "#1E92E8"
+      ? "#2F98EB"
       : "#3EA6FC"
     : hovered
-      ? "#C7E6FF"
-      : "#DCF0FF";
-  const fg = active ? "#FFFFFF" : "#0F172A";
+      ? "#6CC0FF"
+      : "#59B6FF";
   const stroke = hovered ? "#2F97EA" : "#3EA6FC";
+  const textStroke = hovered ? "#187BC8" : "#1D86D7";
 
   const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="19" ry="19" fill="${bg}" stroke="${stroke}" stroke-width="2"/>
-  <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="${fg}">${label}</text>
+  <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="16" ry="16" fill="${bg}" stroke="${stroke}" stroke-width="2"/>
+  <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" stroke="${textStroke}" stroke-width="0.8" paint-order="stroke">${label}</text>
 </svg>`;
 
   return {
@@ -341,7 +341,7 @@ export function mapPopupHtml(item: MapPoint) {
   const reviews = item.reviewsCount;
 
   const image = item.image
-    ? `<img src="${escapeHtml(item.image)}" alt="${title}" style="width:100%;height:172px;object-fit:cover;border-radius:19px;display:block;" />`
+    ? `<img src="${escapeHtml(item.image)}" alt="${title}" loading="lazy" decoding="async" style="width:100%;height:172px;object-fit:cover;border-radius:19px;display:block;" />`
     : '<div style="width:100%;height:172px;border-radius:19px;background:linear-gradient(135deg,#e6e6e6,#cfcfcf);"></div>';
 
   return `

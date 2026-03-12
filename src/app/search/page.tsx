@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import SearchHeader from "@/components/SearchHeader";
 import type { SearchFilters } from "@/components/search/FiltersDialog";
 import { api } from "@/lib/api";
@@ -16,8 +16,6 @@ import {
   loadGoogleMapsApi,
   makeDotMarkerIcon,
   makePriceMarkerIcon,
-  mapPopupHtml,
-  popupPixelOffsetForPoint,
   mapViewportFromMap,
   normalizeViewport,
   PRICE_MARKER_ZOOM,
@@ -46,10 +44,18 @@ import { useListingImageMap } from "./useListingImageMap";
 
 export default function SearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialQuery = React.useMemo(
+    () => (searchParams.get("q") ?? "").trim(),
+    [searchParams],
+  );
   const [sort, setSort] = React.useState<SortKey>("recent_desc");
-  const [searchInput, setSearchInput] = React.useState("");
-  const [activeSearchQuery, setActiveSearchQuery] = React.useState("");
-  const [searchSubmitNonce, setSearchSubmitNonce] = React.useState(0);
+  const [searchInput, setSearchInput] = React.useState(initialQuery);
+  const [activeSearchQuery, setActiveSearchQuery] =
+    React.useState(initialQuery);
+  const [shouldFitSearchResults, setShouldFitSearchResults] = React.useState(
+    Boolean(initialQuery),
+  );
   const [filters, setFilters] = React.useState<SearchFilters | null>(null);
   const [view, setView] = React.useState<ViewMode>("unit");
   const [mapExpanded, setMapExpanded] = React.useState(false);
@@ -75,7 +81,6 @@ export default function SearchPage() {
   const markerRenderSignatureRef = React.useRef("");
   const activeMapIdRef = React.useRef<string | null>(null);
   const hoveredMarkerIdRef = React.useRef<string | null>(null);
-  const pendingSearchFitNonceRef = React.useRef<number | null>(null);
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const isSearchMode = activeSearchQuery.length > 0;
@@ -113,6 +118,12 @@ export default function SearchPage() {
   React.useEffect(() => {
     activeMapIdRef.current = activeMapId;
   }, [activeMapId]);
+
+  React.useEffect(() => {
+    setSearchInput(initialQuery);
+    setActiveSearchQuery(initialQuery);
+    setShouldFitSearchResults(Boolean(initialQuery));
+  }, [initialQuery]);
 
   const mapListingsPath = React.useMemo(() => {
     if (isSearchMode || !mapViewport) return null;
@@ -295,10 +306,6 @@ export default function SearchPage() {
   const unitMapItems = React.useMemo<MapPoint[]>(() => {
     return sortedBuildings.map((building) => {
       const unitCount = unitCountByPropertyId.get(building.id) ?? 0;
-      const markerLabel =
-        unitCount > 1
-          ? `${unitCount} units`
-          : `$${building.priceFrom.toLocaleString()}`;
       return {
         id: building.id,
         title: building.name,
@@ -307,7 +314,8 @@ export default function SearchPage() {
         image: building.images?.[0],
         rating: building.rating,
         reviewsCount: building.reviewsCount,
-        markerLabel,
+        // Match building-view marker sizing by always using a price label.
+        markerLabel: `$${building.priceFrom.toLocaleString()}`,
         href: `/building/${building.id}`,
         lat: building.lat,
         lng: building.lng,
@@ -346,18 +354,6 @@ export default function SearchPage() {
 
   const renderedMarkerPoints = React.useMemo<RenderMarkerPoint[]>(() => {
     if (!visibleMapPoints.length) return [];
-
-    if (view === "unit") {
-      return visibleMapPoints.map((point) => ({
-        id: `unit-building:${point.id}`,
-        lat: point.lat,
-        lng: point.lng,
-        mode: "price",
-        markerLabel: point.markerLabel,
-        count: Math.max(point.unitCount ?? 0, 1),
-        activeKey: point.id,
-      }));
-    }
 
     if (mapZoom < PRICE_MARKER_ZOOM) {
       const bucketSize =
@@ -447,7 +443,7 @@ export default function SearchPage() {
       });
     }
     return markers;
-  }, [mapZoom, view, visibleMapPoints]);
+  }, [mapZoom, visibleMapPoints]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -754,50 +750,9 @@ export default function SearchPage() {
       );
     }
 
-    if (view === "building" || !activeMapId) {
-      infoWindowRef.current?.close();
-      return;
-    }
-
-    const point = renderedMarkerPoints.find(
-      (item) => item.activeKey === activeMapId,
-    );
-    if (!point) {
-      infoWindowRef.current?.close();
-      return;
-    }
-    if (!point.popupItem) {
-      infoWindowRef.current?.close();
-      return;
-    }
-
-    const marker = markerRefs.current[point.id];
-    if (!marker) return;
-
-    const rawViewport = mapViewportFromMap(mapRef.current);
-    const mapWidth = mapContainerRef.current?.clientWidth;
-    const mapHeight = mapContainerRef.current?.clientHeight;
-    const offset =
-      rawViewport != null
-        ? popupPixelOffsetForPoint(point.popupItem, rawViewport, {
-            mapWidth,
-            mapHeight,
-            popupWidth: 320,
-            popupHeight: 300,
-            margin: 12,
-          })
-        : { x: 0, y: -22 };
-    infoWindowRef.current?.setOptions({
-      disableAutoPan: true,
-      pixelOffset: new google.maps.Size(offset.x, offset.y),
-    });
-    infoWindowRef.current?.setContent(mapPopupHtml(point.popupItem));
-    infoWindowRef.current?.open({
-      map: mapRef.current,
-      anchor: marker,
-      shouldFocus: false,
-    });
-  }, [activeMapId, mapReady, renderedMarkerPoints, view]);
+    // Unit marker click should select/highlight only; no popup info window.
+    infoWindowRef.current?.close();
+  }, [activeMapId, mapReady, renderedMarkerPoints]);
 
   React.useEffect(() => {
     if (view === "unit") {
@@ -849,16 +804,15 @@ export default function SearchPage() {
   React.useEffect(() => {
     if (searchInput.trim() !== "") return;
     if (!activeSearchQuery) return;
-    pendingSearchFitNonceRef.current = null;
+    setShouldFitSearchResults(false);
     setActiveSearchQuery("");
   }, [activeSearchQuery, searchInput]);
 
   React.useEffect(() => {
     if (!mapReady || !mapRef.current || !googleRef.current) return;
+    if (!shouldFitSearchResults) return;
     if (!activeSearchQuery || !searchListingsQuery.data) return;
-    if (pendingSearchFitNonceRef.current !== searchSubmitNonce) return;
-
-    pendingSearchFitNonceRef.current = null;
+    setShouldFitSearchResults(false);
     if (!searchListingsQuery.data.items.length) return;
 
     const bounds = new googleRef.current.maps.LatLngBounds();
@@ -870,13 +824,13 @@ export default function SearchPage() {
     activeSearchQuery,
     mapReady,
     searchListingsQuery.data,
-    searchSubmitNonce,
+    shouldFitSearchResults,
   ]);
 
   function handleSearchSubmit() {
     const normalized = searchInput.trim();
     if (!normalized) {
-      pendingSearchFitNonceRef.current = null;
+      setShouldFitSearchResults(false);
       setActiveSearchQuery("");
       return;
     }
@@ -886,12 +840,8 @@ export default function SearchPage() {
     suppressAutoSelectRef.current = false;
     activeMapIdRef.current = null;
     hoveredMarkerIdRef.current = null;
+    setShouldFitSearchResults(true);
     setActiveSearchQuery(normalized);
-    setSearchSubmitNonce((prev) => {
-      const next = prev + 1;
-      pendingSearchFitNonceRef.current = next;
-      return next;
-    });
   }
 
   function openExternalMap() {

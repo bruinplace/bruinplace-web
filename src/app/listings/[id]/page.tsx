@@ -114,6 +114,7 @@ type ApiPropertyReviewsResponse = {
 
 type ApiImageItem = {
   url: string;
+  low_res_url?: string | null;
   display_order: number;
 };
 
@@ -219,18 +220,36 @@ function formatUnitType(unitType: string) {
   return unitType.replaceAll("_", " ").replace(/\b\w/g, (s) => s.toUpperCase());
 }
 
-function sortImageUrls(items: ApiImageItem[] | undefined): string[] {
+type ImageUrlPreference = "full" | "low_res";
+
+function selectImageUrl(
+  item: ApiImageItem,
+  preference: ImageUrlPreference,
+): string | null {
+  if (preference === "low_res") {
+    return item.low_res_url ?? item.url ?? null;
+  }
+  return item.url ?? item.low_res_url ?? null;
+}
+
+function sortImageUrls(
+  items: ApiImageItem[] | undefined,
+  preference: ImageUrlPreference,
+): string[] {
   return (items ?? [])
     .slice()
     .sort((a, b) => a.display_order - b.display_order)
-    .map((item) => item.url)
-    .filter(Boolean);
+    .map((item) => selectImageUrl(item, preference))
+    .filter((url): url is string => Boolean(url));
 }
 
-async function fetchImageUrls(path: string): Promise<string[]> {
+async function fetchImageUrls(
+  path: string,
+  preference: ImageUrlPreference = "full",
+): Promise<string[]> {
   try {
     const response = await api.get<ApiImageListResponse>(path);
-    return sortImageUrls(response.items);
+    return sortImageUrls(response.items, preference);
   } catch {
     return [];
   }
@@ -738,7 +757,7 @@ export default function ListingPage() {
   const recommendedImageQueries = useQueries({
     queries: recommendedBaseItems.map((item) => ({
       queryKey: ["listing_images", item.id],
-      queryFn: () => fetchImageUrls(`/listings/${item.id}/images`),
+      queryFn: () => fetchImageUrls(`/listings/${item.id}/images`, "low_res"),
       staleTime: 60_000,
     })),
   });

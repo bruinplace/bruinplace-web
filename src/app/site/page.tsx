@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { Heart, Search, Star } from "lucide-react";
 import { api } from "@/lib/api";
@@ -38,6 +40,7 @@ type ApiPropertyDetailResponse = {
 
 type ApiImageItem = {
   url: string;
+  low_res_url?: string | null;
   display_order: number;
 };
 
@@ -79,8 +82,8 @@ function firstImageUrl(items: ApiImageItem[]): string | null {
   const first = items
     .slice()
     .sort((a, b) => a.display_order - b.display_order)
-    .find((item) => item.url);
-  return first?.url ?? null;
+    .find((item) => item.low_res_url || item.url);
+  return first ? (first.low_res_url ?? first.url) : null;
 }
 
 async function fetchListingImage(
@@ -250,6 +253,18 @@ function RecommendedRow({
 }
 
 export default function Home() {
+  const router = useRouter();
+  const [heroQuery, setHeroQuery] = useState("");
+
+  function goToSearch() {
+    const q = heroQuery.trim();
+    if (!q) {
+      router.push("/search");
+      return;
+    }
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  }
+
   const listingQueries = useQueries({
     queries: HARD_CODED_LISTING_IDS.map((listingId) => ({
       queryKey: ["landing_listing_detail", listingId],
@@ -361,21 +376,27 @@ export default function Home() {
             Built by Bruins, for every Bruin looking for their next place.
           </p>
 
-          <div className="absolute left-1/2 top-[249px] w-[556px] -translate-x-1/2">
+          <form
+            className="absolute left-1/2 top-[249px] w-[556px] -translate-x-1/2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              goToSearch();
+            }}
+          >
             <input
-              readOnly
-              value=""
+              value={heroQuery}
+              onChange={(event) => setHeroQuery(event.target.value)}
               placeholder="Search by address, neighborhood, zip code"
               className="h-[57px] w-full rounded-[90px] bg-white pl-[30px] pr-[76px] text-[20px] leading-7 text-[#919191] outline-none placeholder:text-[#919191]"
             />
-            <Link
-              href="/search"
+            <button
+              type="submit"
               aria-label="Search"
               className="absolute right-[11px] top-1/2 inline-flex h-[44px] w-[44px] -translate-y-1/2 items-center justify-center rounded-full bg-[#3EA6FC] text-white"
             >
               <Search className="h-[22px] w-[22px]" />
-            </Link>
-          </div>
+            </button>
+          </form>
         </div>
       </section>
 
