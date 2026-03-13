@@ -43,6 +43,14 @@ import type {
 import { useListingImageMap } from "./useListingImageMap";
 
 export default function SearchPage() {
+  return (
+    <React.Suspense>
+      <SearchPageInner />
+    </React.Suspense>
+  );
+}
+
+function SearchPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialQuery = React.useMemo(
