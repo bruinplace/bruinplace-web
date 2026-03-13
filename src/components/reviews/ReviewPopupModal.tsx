@@ -153,6 +153,8 @@ export function ReviewPopupModal({
                   src={mainImageUrl}
                   alt=""
                   className="w-full h-[420px] object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
 
@@ -175,6 +177,8 @@ export function ReviewPopupModal({
                         src={url}
                         alt=""
                         className="h-[92px] w-[140px] object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </button>
                   );
@@ -190,6 +194,8 @@ export function ReviewPopupModal({
                       src={thumbnails[activeThumbIndex + 1]}
                       alt=""
                       className="h-[92px] w-[140px] object-cover opacity-90"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <span className="absolute inset-0 grid place-items-center">
                       <span className="h-12 w-12 rounded-full bg-sky-400 grid place-items-center shadow">
